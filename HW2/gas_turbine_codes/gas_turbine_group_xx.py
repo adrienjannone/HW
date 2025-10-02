@@ -98,7 +98,8 @@ class gas_turbine(object):
         self.loss_combex = 0.0
         self.loss_echex = 0.0
 
-        self.table = {"CH4":{"LHV":50150, "cp":35.3, "ec":52215},}
+        self.table = {"CH4":{"LHV":50150e3, "cp":35.3, "ec":52215},}
+        self.ldb = 0
 
     def cp_func(self, T, p=1e+5):
         cp = 0
@@ -136,12 +137,31 @@ class gas_turbine(object):
     def get_h3(self, lbd):
         self.x = self.alkane[0]
         self.y = self.alkane[1]
-        xO2 = (self.x + self.y/4)*lbd
+        # Nombre de moles de chaque espèce dans les produits de combustion
+        xO2 = (self.x + self.y/4)*(lbd-1)
         xCO2 = self.x
         xH2O = self.y/2
-        #TODO: Complete for xN2
-        return
+        xN2 = (self.air_prop[0]/self.air_prop[1]) * lbd * (self.x + self.y/4)
 
+        # Masse de chaque espèce dans les produits de combustion
+        mO2 = xO2*CP.PropsSI("MOLAR_MASS","O2")
+        mCO2 = xCO2*CP.PropsSI("MOLAR_MASS","CO2")
+        mH2O = xH2O*CP.PropsSI("MOLAR_MASS","H2O")
+        mN2 = xN2*CP.PropsSI("MOLAR_MASS","N2")
+
+        # Fraction massique de chaque espèce dans les produits de combustion
+        mtot = mO2 + mCO2 + mH2O + mN2
+        mO2, mCO2, mH2O, mN2 = mO2/mtot, mCO2/mtot, mH2O/mtot, mN2/mtot
+        # h3
+        return mO2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'O2') + mCO2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'CO2') + mH2O*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'H2O') + mN2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'N2')
+
+    def get_lbd(self, lbd):
+        h_3 = self.get_h3(lbd)
+        x = self.alkane[0]
+        y = self.alkane[1]
+        temp = (self.air_prop[0]/self.air_prop[1])
+        m_a1 = ( (x + (y/4)) * (CP.PropsSI("MOLAR_MASS","O2") + temp*CP.PropsSI("MOLAR_MASS","N2")) )/(CP.PropsSI("MOLAR_MASS","CH4")) # [kg_air/kg_fuel]
+        return lbd - (self.table["CH4"]["LHV"] + self.h_f - h_3)/(m_a1*(h_3 - self.h_2))
 
     def evaluate(self):
         """
@@ -150,10 +170,7 @@ class gas_turbine(object):
         the cycle, as well as some KPI's.
         """
         self.set_ref()
-        self.get_R()
-        Cx_fuel = self.alkane[0]
-        Hy_fuel = self.alkane[1]
-        m_a1 = ((Cx_fuel + (Hy_fuel/4))*(32+28*3.76))/(12*Cx_fuel + Hy_fuel) # [kg_air/kg_fuel]       
+        self.get_R()     
 
         for i in range(len(self.air)):
             self.h_1 += self.air_prop[i]*(CP.PropsSI('H','P',self.p_1,'T',self.T_1,self.air[i]))
@@ -167,8 +184,10 @@ class gas_turbine(object):
         
         self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15) # [kJ/kg]
 
-
         self.p_3 = self.p_2*self.k_cc
+        self.ldb = fsolve(self.get_lbd, 1.0)[0]
+        self.h_3 = self.get_h3(self.ldb)
+        print(self.ldb, self.h_3)
         #h_3 = function de lambda
         #s3 =
         self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
