@@ -98,7 +98,7 @@ class gas_turbine(object):
         self.loss_combex = 0.0
         self.loss_echex = 0.0
 
-        self.table = {"CH4":{"LHV":50150e3, "cp":35.3, "ec":52215},}
+        self.table = {"CH4":{"LHV":50150e3, "cp":35.3, "ec":52215},} #cp in KJ/(kmole.K)
         self.ldb = 0
 
     def cp_func(self, T, p=1e+5):
@@ -132,7 +132,9 @@ class gas_turbine(object):
         for gas in gases:
             Dm = CP.PropsSI('DMOLAR','P',1e+5,'T',273.15,gas)
             CP.set_reference_state(gas, 273.15, Dm, 0, 0)
-        CP.set_reference_state('H2O', 'NBP') #s=0, h=0 @ 1 atm, 373.15K
+
+        Dw = CP.PropsSI('DMOLAR','Q',1,'T',273.15,'H2O')
+        CP.set_reference_state('H2O', 273.15, Dw, 0, 0)
 
     def get_h3(self, lbd):
         self.x = self.alkane[0]
@@ -162,6 +164,12 @@ class gas_turbine(object):
         temp = (self.air_prop[0]/self.air_prop[1])
         m_a1 = ( (x + (y/4)) * (CP.PropsSI("MOLAR_MASS","O2") + temp*CP.PropsSI("MOLAR_MASS","N2")) )/(CP.PropsSI("MOLAR_MASS","CH4")) # [kg_air/kg_fuel]
         return lbd - (self.table["CH4"]["LHV"] + self.h_f - h_3)/(m_a1*(h_3 - self.h_2))
+    
+    def cp_CH4(self, T):
+        return CP.PropsSI('CPMASS','P',(self.p_2 + self.p_3),'T',T,'CH4')
+    
+    def get_hf(self):
+        return quad(self.cp_CH4, 273.15, self.T_3)[0]
 
     def evaluate(self):
         """
@@ -182,14 +190,15 @@ class gas_turbine(object):
         self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*np.log(self.T_2/self.T_1)
         self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
         
-        self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15) # [kJ/kg]
+        # self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15)
+        self.h_f = self.get_hf()
+
 
         self.p_3 = self.p_2*self.k_cc
         self.ldb = fsolve(self.get_lbd, 1.0)[0]
         self.h_3 = self.get_h3(self.ldb)
-        print(self.ldb, self.h_3)
-        #h_3 = function de lambda
-        #s3 =
+        # TODO: s3
+
         self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
         
         self.p_4 = self.p_1
