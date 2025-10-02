@@ -76,8 +76,8 @@ class gas_turbine(object):
         self.e_2 = 0.0
         self.e_3 = 0.0
         self.e_4 = 0.0
+        self.LHV = 0.0
         self.e_f = 0.0
-
         self.excess_air = 0.0
         self.gas = []
         self.gas_prop = []
@@ -96,8 +96,9 @@ class gas_turbine(object):
         self.loss_rotex = 0.0
         self.loss_combex = 0.0
         self.loss_echex = 0.0
+        self.Cx_fuel = self.alkane[0]
+        self.Hy_fuel = self.alkane[1]
 
-        self.table = {"CH4":{"LHV":50150, "cp":35.3, "ec":52215},}
 
     def cp_func(self, T, p=1e+5):
         cp = 0
@@ -123,15 +124,27 @@ class gas_turbine(object):
         cp = self.cp_avg(self.T_3, T4, (self.p_4+self.p_3)/2)
         return T4 - self.T_3 * (self.p_4 / self.p_3) ** ((self.R*self.eta_pi_t) / cp)
     
+    
+    def h3_func(self, lbd):
+        x,y,lbd,r = self.Cx_fuel, self.Hy_fuel, lbd, 3.76
+        den = (x+y/4)*(lbd-1)+x+y/2+r*lbd*(x+y/4)
+        h_3 = ((x+y/4)*(lbd-1)/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'O2') + (y/2/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'H2O') + (r*lbd*(x+y/4)/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'N2') + (x/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'CO2')
+        return h_3
+        
+        
+
+    def lambda_func(self, lbd, hf, h2, m_a1):
+        h_3 = self.h3_func(lbd)
+        return lbd - ((self.LHV + hf - h_3) /(m_a1*(h_3 - h2)))
+    
     def set_ref(self):
         # CO2 O2 N2 H2O
         #s=0, h=0 @ 1 bar, 273.15K
-        gases = ['CO2','O2','N2']
+        gases = ['CO2','O2','N2','CH4']
         for gas in gases:
             Dm = CP.PropsSI('DMOLAR','P',1e+5,'T',273.15,gas)
             CP.set_reference_state(gas, 273.15, Dm, 0, 0)
-        CP.set_reference_state('H2O', 'NBP') #s=0, h=0 @ 1 atm, 373.15K 
-
+        CP.set_reference_state('H2O', 'NBP') #s=0, h=0 @ 1 atm, 373.15K
 
     def evaluate(self):
         """
@@ -139,11 +152,24 @@ class gas_turbine(object):
         It evaluates the different thermodynamic quantities at each state of 
         the cycle, as well as some KPI's.
         """
-        self.set_ref()
+    
+        # >>>>>             <<<<< #    
+        # Replace with your model #
+        # >>>>>             <<<<< #
+        # 
+
+        self.set_ref() 
         self.get_R()
-        Cx_fuel = self.alkane[0]
-        Hy_fuel = self.alkane[1]
-        m_a1 = ((Cx_fuel + (Hy_fuel/4))*(32+28*3.76))/(12*Cx_fuel + Hy_fuel) # [kg_air/kg_fuel]       
+        T0 = 273.15
+        p0 = 1e+5
+        self.Cx_fuel = self.alkane[0]
+        self.Hy_fuel = self.alkane[1]
+        m_a1 = ((self.Cx_fuel + (self.Hy_fuel/4))*(32+28*3.76))/(12*self.Cx_fuel + self.Hy_fuel) # [kg_air/kg_fuel]
+        self.LHV = 50150 #kJ/kg
+        cp_CH4 = 35.3 #kJ/ kmol.K 
+        hf = cp_CH4 * (self.T_3*1000/(CP.PropsSI('M', 'T', T0, 'P', p0, 'CH4'))) #kJ/kg
+        print(hf)
+
 
         for i in range(len(self.air)):
             self.h_1 += self.air_prop[i]*(CP.PropsSI('H','P',self.p_1,'T',self.T_1,self.air[i]))
@@ -153,20 +179,23 @@ class gas_turbine(object):
         self.T_2 = sc.optimize.fsolve(self.T2_func, (self.T_1+self.T_3)/2)[0]
         self.h_2 = self.h_1 + self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*(self.T_2 - self.T_1)
         self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*np.log(self.T_2/self.T_1)
-        self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
         
-        print(self.e_2)
+        print(self.h_1, self.h_2)
+        print(self.T_1, self.T_2)
+        print(self.s_1, self.s_2)
+        print(self.p_1, self.p_2)
 
         self.p_3 = self.p_2*self.k_cc
-        #h_3 = function de lambda
-        #s3 =
-        self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
+        self.excess_air = sc.optimize.fsolve(lambda lbd : self.lambda_func(lbd,hf,self.h_2,m_a1),1.5)[0]
+        print(self.excess_air)
+
+        
         
         self.p_4 = self.p_1
         self.T_4 = sc.optimize.fsolve(self.T4_func, (self.T_1+self.T_3)/2)[0]
         self.h_4 = self.h_3 - self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*(self.T_3 - self.T_4)
         self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*np.log(self.T_4/self.T_3)
-        self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
+        
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
@@ -176,8 +205,7 @@ class gas_turbine(object):
         self.e           = self.e_1, self.e_2, self.e_3, self.e_4
         self.DAT         = self.p,self.T,self.s,self.h,self.e
         # Combustion paramters ------------------------------------------------
-        LHV = self.table["CH4"]["LHV"]
-        self.COMBUSTION  = LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
+        self.COMBUSTION  = self.LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
         # Mass flow rates -----------------------------------------------------
         self.MASSFLOW    = self.dotm_a,self.dotm_f,self.dotm_g
         # Efficiencies --------------------------------------------------------
