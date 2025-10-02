@@ -77,6 +77,7 @@ class gas_turbine(object):
         self.e_3 = 0.0
         self.e_4 = 0.0
         self.e_f = 0.0
+        self.h_f = 0.0
 
         self.excess_air = 0.0
         self.gas = []
@@ -130,7 +131,16 @@ class gas_turbine(object):
         for gas in gases:
             Dm = CP.PropsSI('DMOLAR','P',1e+5,'T',273.15,gas)
             CP.set_reference_state(gas, 273.15, Dm, 0, 0)
-        CP.set_reference_state('H2O', 'NBP') #s=0, h=0 @ 1 atm, 373.15K 
+        CP.set_reference_state('H2O', 'NBP') #s=0, h=0 @ 1 atm, 373.15K
+
+    def get_h3(self, lbd):
+        self.x = self.alkane[0]
+        self.y = self.alkane[1]
+        xO2 = (self.x + self.y/4)*lbd
+        xCO2 = self.x
+        xH2O = self.y/2
+        #TODO: Complete for xN2
+        return
 
 
     def evaluate(self):
@@ -155,7 +165,8 @@ class gas_turbine(object):
         self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*np.log(self.T_2/self.T_1)
         self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
         
-        print(self.e_2)
+        self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15) # [kJ/kg]
+
 
         self.p_3 = self.p_2*self.k_cc
         #h_3 = function de lambda
