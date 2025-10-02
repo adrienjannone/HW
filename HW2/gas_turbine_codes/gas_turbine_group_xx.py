@@ -76,8 +76,7 @@ class gas_turbine(object):
         self.e_2 = 0.0
         self.e_3 = 0.0
         self.e_4 = 0.0
-        self.LHV = 0.0
-        self.e_f = 0.0
+
         self.excess_air = 0.0
         self.gas = []
         self.gas_prop = []
@@ -96,6 +95,8 @@ class gas_turbine(object):
         self.loss_rotex = 0.0
         self.loss_combex = 0.0
         self.loss_echex = 0.0
+
+        self.table = {"CH4":{"LHV":50150, "cp":35.3, "ec":52215},}
 
     def cp_func(self, T, p=1e+5):
         cp = 0
@@ -128,9 +129,6 @@ class gas_turbine(object):
         the cycle, as well as some KPI's.
         """
     
-        # >>>>>             <<<<< #    
-        # Replace with your model #
-        # >>>>>             <<<<< # 
         self.get_R()
         T0 = 273.15
         p0 = 1e+5
