@@ -76,6 +76,7 @@ class gas_turbine(object):
         self.e_2 = 0.0
         self.e_3 = 0.0
         self.e_4 = 0.0
+        self.e_f = 0.0
 
         self.excess_air = 0.0
         self.gas = []
@@ -128,8 +129,8 @@ class gas_turbine(object):
         gases = ['CO2','O2','N2']
         for gas in gases:
             Dm = CP.PropsSI('DMOLAR','P',1e+5,'T',273.15,gas)
-            CP.set_reference_stateS(gas, '273.15K', Dm, 0, 0)
-        CP.set_reference_stateS('H2O', 'NBP', 0, 0, 0) #s=0, h=0 @ 1 atm, 373.15K 
+            CP.set_reference_state(gas, 273.15, Dm, 0, 0)
+        CP.set_reference_state('H2O', 'NBP') #s=0, h=0 @ 1 atm, 373.15K 
 
 
     def evaluate(self):
@@ -152,16 +153,20 @@ class gas_turbine(object):
         self.T_2 = sc.optimize.fsolve(self.T2_func, (self.T_1+self.T_3)/2)[0]
         self.h_2 = self.h_1 + self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*(self.T_2 - self.T_1)
         self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*np.log(self.T_2/self.T_1)
+        self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
         
+        print(self.e_2)
+
         self.p_3 = self.p_2*self.k_cc
         #h_3 = function de lambda
-        #s3 = 
+        #s3 =
+        self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
         
         self.p_4 = self.p_1
         self.T_4 = sc.optimize.fsolve(self.T4_func, (self.T_1+self.T_3)/2)[0]
         self.h_4 = self.h_3 - self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*(self.T_3 - self.T_4)
         self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*np.log(self.T_4/self.T_3)
-        
+        self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
@@ -171,7 +176,8 @@ class gas_turbine(object):
         self.e           = self.e_1, self.e_2, self.e_3, self.e_4
         self.DAT         = self.p,self.T,self.s,self.h,self.e
         # Combustion paramters ------------------------------------------------
-        self.COMBUSTION  = self.LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
+        LHV = self.table["CH4"]["LHV"]
+        self.COMBUSTION  = LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
         # Mass flow rates -----------------------------------------------------
         self.MASSFLOW    = self.dotm_a,self.dotm_f,self.dotm_g
         # Efficiencies --------------------------------------------------------
