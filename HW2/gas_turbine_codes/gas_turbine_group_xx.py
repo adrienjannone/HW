@@ -122,7 +122,7 @@ class gas_turbine(object):
         cp = self.cp_avg(self.T_3, T4, (self.p_4+self.p_3)/2)
         return T4 - self.T_3 * (self.p_4 / self.p_3) ** ((self.R*self.eta_pi_t) / cp)
     
-    def set_ref(self.):
+    def set_ref(self):
         # CO2 O2 N2 H2O
         #s=0, h=0 @ 1 bar, 273.15K
         gases = ['CO2','O2','N2']
