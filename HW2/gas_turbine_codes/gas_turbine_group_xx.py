@@ -121,6 +121,16 @@ class gas_turbine(object):
     def T4_func(self, T4):
         cp = self.cp_avg(self.T_3, T4, (self.p_4+self.p_3)/2)
         return T4 - self.T_3 * (self.p_4 / self.p_3) ** ((self.R*self.eta_pi_t) / cp)
+    
+    def set_ref(self.):
+        # CO2 O2 N2 H2O
+        #s=0, h=0 @ 1 bar, 273.15K
+        gases = ['CO2','O2','N2']
+        for gas in gases:
+            Dm = CP.PropsSI('DMOLAR','P',1e+5,'T',273.15,gas)
+            CP.set_reference_stateS(gas, '273.15K', Dm, 0, 0)
+        CP.set_reference_stateS('H2O', 'NBP', 0, 0, 0) #s=0, h=0 @ 1 atm, 373.15K 
+
 
     def evaluate(self):
         """
@@ -128,33 +138,15 @@ class gas_turbine(object):
         It evaluates the different thermodynamic quantities at each state of 
         the cycle, as well as some KPI's.
         """
-    
+        self.set_ref()
         self.get_R()
-        T0 = 273.15
-        p0 = 1e+5
-        h_ref = [CP.PropsSI('H','P',p0,'T',T0,'N2'),CP.PropsSI('H','P',p0,'T',T0,'O2')]
-        s_ref = [CP.PropsSI('S','P',p0,'T',T0,'N2'),CP.PropsSI('S','P',p0,'T',T0,'O2')]
         Cx_fuel = self.alkane[0]
         Hy_fuel = self.alkane[1]
-        m_a1 = ((Cx_fuel + (Hy_fuel/4))*(32+28*3.76))/(12*Cx_fuel + Hy_fuel) # [kg_air/kg_fuel]
-        print('Stoichiometric air-to-fuel ratio = ', m_a1, 'kg_air/kg_fuel')
-        H_form_CH4 = -74.8e+3 # [J/mol]
-        H_form_O2 = 0.0
-        H_form_CO2 = -393.5e+3 # [J/mol]
-        H_form_H2O = -241.8e+3 # [J/mol]
-        LHV_molar = H_form_CH4 + 2*H_form_O2 - H_form_CO2 - 2*H_form_H2O # [J/mol]
-        self.LHV = LHV_molar/(1000* CP.PropsSI('M', 'T', T0, 'P', p0, 'CH4')) # [kJ/kg]
-        print('LHV = ', self.LHV, 'kJ/kg')
-        cp_CH4 = 35.3 #kJ/ kmol.K 
-        hf = cp_CH4 * self.T_3
-        print('hf = ', hf, 'kJ/kmol')
-
-
-        
+        m_a1 = ((Cx_fuel + (Hy_fuel/4))*(32+28*3.76))/(12*Cx_fuel + Hy_fuel) # [kg_air/kg_fuel]       
 
         for i in range(len(self.air)):
-            self.h_1 += self.air_prop[i]*(CP.PropsSI('H','P',self.p_1,'T',self.T_1,self.air[i])-h_ref[i])
-            self.s_1 += self.air_prop[i]*(CP.PropsSI('S','P',self.p_1,'T',self.T_1,self.air[i])-s_ref[i])
+            self.h_1 += self.air_prop[i]*(CP.PropsSI('H','P',self.p_1,'T',self.T_1,self.air[i]))
+            self.s_1 += self.air_prop[i]*(CP.PropsSI('S','P',self.p_1,'T',self.T_1,self.air[i]))
         
         self.p_2 = self.r_c*self.p_1
         self.T_2 = sc.optimize.fsolve(self.T2_func, (self.T_1+self.T_3)/2)[0]
