@@ -101,6 +101,11 @@ class gas_turbine(object):
         self.table = {"CH4":{"LHV":50150e3, "cp":35.3, "ec":52215},} #cp in KJ/(kmole.K)
         self.ldb = 0
 
+        x = self.alkane[0]
+        y = self.alkane[1]
+        temp = (self.air_prop[0]/self.air_prop[1])
+        self.ma1 = ( (x + (y/4)) * (CP.PropsSI("MOLAR_MASS","O2") + temp*CP.PropsSI("MOLAR_MASS","N2")) )/(CP.PropsSI("MOLAR_MASS","CH4")) # [kg_air/kg_fuel]
+
     def cp_func(self, T, p=1e+5):
         cp = 0
         for i in range(len(self.air)):
@@ -159,17 +164,22 @@ class gas_turbine(object):
 
     def get_lbd(self, lbd):
         h_3 = self.get_h3(lbd)
-        x = self.alkane[0]
-        y = self.alkane[1]
-        temp = (self.air_prop[0]/self.air_prop[1])
-        m_a1 = ( (x + (y/4)) * (CP.PropsSI("MOLAR_MASS","O2") + temp*CP.PropsSI("MOLAR_MASS","N2")) )/(CP.PropsSI("MOLAR_MASS","CH4")) # [kg_air/kg_fuel]
-        return lbd - (self.table["CH4"]["LHV"] + self.h_f - h_3)/(m_a1*(h_3 - self.h_2))
+        return lbd - (self.table["CH4"]["LHV"] + self.h_f - h_3)/(self.ma1*(h_3 - self.h_2))
     
     def cp_CH4(self, T):
         return CP.PropsSI('CPMASS','P',(self.p_2 + self.p_3),'T',T,'CH4')
     
     def get_hf(self):
         return quad(self.cp_CH4, 273.15, self.T_3)[0]
+    
+    def print_states(self):
+        print("State 1: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_1, self.T_1-273.15, self.h_1*1e-3, self.s_1*1e-3, self.e_1*1e-3))
+        print("State 2: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_2, self.T_2-273.15, self.h_2*1e-3, self.s_2*1e-3, self.e_2*1e-3))
+        print("State 3: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_3, self.T_3-273.15, self.h_3*1e-3, self.s_3*1e-3, self.e_3*1e-3))
+        print("State 4: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_4, self.T_4-273.15, self.h_4*1e-3, self.s_4*1e-3, self.e_4*1e-3))
+        print("dotm_a = {:.2f} kg/s".format(self.dotm_a))
+        print("dotm_f = {:.2f} kg/s".format(self.dotm_f))
+        print("dotm_g = {:.2f} kg/s".format(self.dotm_g))
 
     def evaluate(self):
         """
@@ -197,6 +207,7 @@ class gas_turbine(object):
         self.p_3 = self.p_2*self.k_cc
         self.ldb = fsolve(self.get_lbd, 1.0)[0]
         self.h_3 = self.get_h3(self.ldb)
+        self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2)*np.log(self.T_3/self.T_2)
         # TODO: s3
 
         self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
@@ -207,7 +218,10 @@ class gas_turbine(object):
         self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*np.log(self.T_4/self.T_3)
         self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
 
-        print(self.ldb)
+        # Mass flow rates -----------------------------------------------------
+        self.dotm_g = self.P_e/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
+        self.dotm_f = self.dotm_g/(self.ldb*self.ma1 + 1)
+        self.dotm_a = self.ldb*self.ma1*self.dotm_f
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
