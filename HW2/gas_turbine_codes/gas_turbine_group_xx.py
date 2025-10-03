@@ -180,6 +180,9 @@ class gas_turbine(object):
         print("dotm_a = {:.2f} kg/s".format(self.dotm_a))
         print("dotm_f = {:.2f} kg/s".format(self.dotm_f))
         print("dotm_g = {:.2f} kg/s".format(self.dotm_g))
+        print("eta_cyclen = {:.2f} %".format(self.eta_cyclen))
+        print("eta_toten = {:.2f} %".format(self.eta_toten))
+        print("eta_mec = {:.2f} %".format(self.eta_mec))
 
     def evaluate(self):
         """
@@ -219,9 +222,15 @@ class gas_turbine(object):
         self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
 
         # Mass flow rates -----------------------------------------------------
-        self.dotm_g = self.P_e/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
+        self.eta_mec = 1 - self.k_mec * (self.h_3 - self.h_4 + self.h_2 - self.h_1)/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
+        self.dotm_g = self.P_e/((self.h_3 - self.h_4 - self.h_2 + self.h_1)*self.eta_mec)
         self.dotm_f = self.dotm_g/(self.ldb*self.ma1 + 1)
         self.dotm_a = self.ldb*self.ma1*self.dotm_f
+
+        # Efficiencies --------------------------------------------------------
+        self.eta_cyclen = 1 - ( (1+ 1/(self.ldb*self.ma1)) *self.h_4 - self.h_1 )/( (1+ 1/(self.ldb*self.ma1))*self.h_3 - self.h_2 )
+        self.eta_toten = self.P_e/(self.dotm_f*self.table["CH4"]["LHV"])
+
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
@@ -243,3 +252,5 @@ class gas_turbine(object):
         self.DATEX       = self.loss_mec,self.loss_rotex,self.loss_combex,self.loss_echex
         # Energy and Exergy pie charts
         #if self.display: self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_ph
+
+        self.print_states()
