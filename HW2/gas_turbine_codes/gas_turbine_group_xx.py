@@ -238,12 +238,13 @@ class gas_turbine(object):
         self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2, 'air', True)
         self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
 
-        # self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15)
-        self.h_f = self.get_hf()
+        self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15)
+        #self.h_f = self.get_hf()
 
 
         self.p_3 = self.p_2*self.k_cc
         self.lbd = fsolve(self.get_lbd, 1.0)[0]
+        print('lbd = %.2f ' % (self.lbd))
         self.get_fluegas() 
         self.h_3 = self.get_h3(self.lbd)
         self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) - self.R*np.log(self.p_3/self.p_2)
