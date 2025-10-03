@@ -190,8 +190,8 @@ class gas_turbine(object):
         self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*np.log(self.T_2/self.T_1)
         self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
         
-        # self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15)
-        self.h_f = self.get_hf()
+        self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15)
+        # self.h_f = self.get_hf()
 
 
         self.p_3 = self.p_2*self.k_cc
@@ -206,6 +206,8 @@ class gas_turbine(object):
         self.h_4 = self.h_3 - self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*(self.T_3 - self.T_4)
         self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*np.log(self.T_4/self.T_3)
         self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
+
+        print(self.ldb)
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
