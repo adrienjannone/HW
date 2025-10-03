@@ -76,8 +76,9 @@ class gas_turbine(object):
         self.e_2 = 0.0
         self.e_3 = 0.0
         self.e_4 = 0.0
-        self.LHV = 0.0
         self.e_f = 0.0
+        self.h_f = 0.0
+
         self.excess_air = 0.0
         self.gas = []
         self.gas_prop = []
@@ -96,9 +97,9 @@ class gas_turbine(object):
         self.loss_rotex = 0.0
         self.loss_combex = 0.0
         self.loss_echex = 0.0
-        self.Cx_fuel = self.alkane[0]
-        self.Hy_fuel = self.alkane[1]
 
+        self.table = {"CH4":{"LHV":50150e3, "cp":35.3, "ec":52215},} #cp in KJ/(kmole.K)
+        self.lbd = 0
 
     def cp_func(self, T, p=1e+5):
         cp = 0
@@ -106,11 +107,58 @@ class gas_turbine(object):
             cp += self.air_prop[i]*CP.PropsSI('CPMASS','P',p,'T',T,self.air[i])
         return cp
     
-    def cp_avg(self, T1, T2, p):
-        return sc.integrate.quad(self.cp_func, T1, T2, args=(p,))[0]/(T2-T1)
+    def cp_func_T(self, T, p=1e+5):
+        cp = 0
+        for i in range(len(self.air)):
+            cp += self.air_prop[i]*CP.PropsSI('CPMASS','P',p,'T',T,self.air[i])
+        return cp/T
+    
+    def get_fluegas(self):
+        self.x = self.alkane[0]
+        self.y = self.alkane[1]
+        nO2 = (self.x + self.y/4)*(self.lbd-1)
+        nCO2 = self.x
+        nH2O = self.y/2
+        nN2 = (self.air_prop[0]/self.air_prop[1]) * self.lbd * (self.x + self.y/4)
+        ntot = nO2 + nCO2 + nH2O + nN2
+        xO2, xCO2, xH2O, xN2 = nO2/ntot, nCO2/ntot, nH2O/ntot, nN2/ntot
+        if self.x != 0 or self.y != 0:
+            self.gas.append('O2')
+            self.gas_prop.append(xO2)
+            self.gas.append('N2')
+            self.gas_prop.append(xN2)
+        if self.x != 0:
+            self.gas.append('CO2')
+            self.gas_prop.append(xCO2)
+        if self.y != 0:
+            self.gas.append('H2O')
+            self.gas_prop.append(xH2O)
+    
+    def cp_func_fluegas(self, T, p=1e+5):
+        cp = 0
+        for i in range(len(self.gas)):
+            cp += self.gas_prop[i]*CP.PropsSI('CPMASS','P',p,'T',T,self.gas[i])
+        return cp
+    
+    def cp_func_fluegas_T(self, T, p=1e+5):
+        cp = 0
+        for i in range(len(self.gas)):
+            cp += self.gas_prop[i]*CP.PropsSI('CPMASS','P',p,'T',T,self.gas[i])
+        return cp/T
+    
+    def cp_avg(self, T1, T2, p, name, T):
+        if T == True:
+            if name == "air":
+                return sc.integrate.quad(self.cp_func_T, T1, T2, args=(p,))[0]/np.log(T2/T1)
+            elif name == "fluegas":
+                return sc.integrate.quad(self.cp_func_fluegas_T, T1, T2, args=(p,))[0]/np.log(T2/T1)
+        if name == "air":
+            return sc.integrate.quad(self.cp_func, T1, T2, args=(p,))[0]/(T2-T1)
+        elif name == "fluegas":
+            return sc.integrate.quad(self.cp_func_fluegas, T1, T2, args=(p,))[0]/(T2-T1)    
     
     def T2_func(self, T2):
-        cp = self.cp_avg(self.T_1, T2, (self.p_2+self.p_1)/2)
+        cp = self.cp_avg(self.T_1, T2, (self.p_2+self.p_1)/2, "air", False)
         return T2 - self.T_1 * (self.p_2 / self.p_1) ** (self.R / (cp * self.eta_pi_c))
     
     def get_R(self):
@@ -121,30 +169,54 @@ class gas_turbine(object):
         self.R = R_u / M_mix
 
     def T4_func(self, T4):
-        cp = self.cp_avg(self.T_3, T4, (self.p_4+self.p_3)/2)
+        cp = self.cp_avg(self.T_3, T4, (self.p_4+self.p_3)/2, "fluegas", False)
         return T4 - self.T_3 * (self.p_4 / self.p_3) ** ((self.R*self.eta_pi_t) / cp)
-    
-    
-    def h3_func(self, lbd):
-        x,y,lbd,r = self.Cx_fuel, self.Hy_fuel, lbd, 3.76
-        den = (x+y/4)*(lbd-1)+x+y/2+r*lbd*(x+y/4)
-        h_3 = ((x+y/4)*(lbd-1)/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'O2') + (y/2/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'H2O') + (r*lbd*(x+y/4)/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'N2') + (x/den)*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'CO2')
-        return h_3
-        
-        
-
-    def lambda_func(self, lbd, hf, h2, m_a1):
-        h_3 = self.h3_func(lbd)
-        return lbd - ((self.LHV + hf - h_3) /(m_a1*(h_3 - h2)))
     
     def set_ref(self):
         # CO2 O2 N2 H2O
         #s=0, h=0 @ 1 bar, 273.15K
-        gases = ['CO2','O2','N2','CH4']
+        gases = ['CO2','O2','N2']
         for gas in gases:
             Dm = CP.PropsSI('DMOLAR','P',1e+5,'T',273.15,gas)
             CP.set_reference_state(gas, 273.15, Dm, 0, 0)
-        CP.set_reference_state('H2O', 'NBP') #s=0, h=0 @ 1 atm, 373.15K
+
+        Dw = CP.PropsSI('DMOLAR','Q',1,'T',273.15,'H2O')
+        CP.set_reference_state('H2O', 273.15, Dw, 0, 0)
+
+    def get_h3(self, lbd):
+        self.x = self.alkane[0]
+        self.y = self.alkane[1]
+        # Nombre de moles de chaque espèce dans les produits de combustion
+        xO2 = (self.x + self.y/4)*(lbd-1)
+        xCO2 = self.x
+        xH2O = self.y/2
+        xN2 = (self.air_prop[0]/self.air_prop[1]) * lbd * (self.x + self.y/4)
+
+        # Masse de chaque espèce dans les produits de combustion
+        mO2 = xO2*CP.PropsSI("MOLAR_MASS","O2")
+        mCO2 = xCO2*CP.PropsSI("MOLAR_MASS","CO2")
+        mH2O = xH2O*CP.PropsSI("MOLAR_MASS","H2O")
+        mN2 = xN2*CP.PropsSI("MOLAR_MASS","N2")
+
+        # Fraction massique de chaque espèce dans les produits de combustion
+        mtot = mO2 + mCO2 + mH2O + mN2
+        mO2, mCO2, mH2O, mN2 = mO2/mtot, mCO2/mtot, mH2O/mtot, mN2/mtot
+        # h3
+        return mO2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'O2') + mCO2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'CO2') + mH2O*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'H2O') + mN2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'N2')
+
+    def get_lbd(self, lbd):
+        h_3 = self.get_h3(lbd)
+        x = self.alkane[0]
+        y = self.alkane[1]
+        temp = (self.air_prop[0]/self.air_prop[1])
+        m_a1 = ( (x + (y/4)) * (CP.PropsSI("MOLAR_MASS","O2") + temp*CP.PropsSI("MOLAR_MASS","N2")) )/(CP.PropsSI("MOLAR_MASS","CH4")) # [kg_air/kg_fuel]
+        return lbd - (self.table["CH4"]["LHV"] + self.h_f - h_3)/(m_a1*(h_3 - self.h_2))
+    
+    def cp_CH4(self, T):
+        return CP.PropsSI('CPMASS','P',(self.p_2 + self.p_3),'T',T,'CH4')
+    
+    def get_hf(self):
+        return quad(self.cp_CH4, 273.15, self.T_3)[0]
 
     def evaluate(self):
         """
@@ -152,24 +224,9 @@ class gas_turbine(object):
         It evaluates the different thermodynamic quantities at each state of 
         the cycle, as well as some KPI's.
         """
-    
-        # >>>>>             <<<<< #    
-        # Replace with your model #
-        # >>>>>             <<<<< #
-        # 
-
-        self.set_ref() 
-        self.get_R()
-        T0 = 273.15
-        p0 = 1e+5
-        self.Cx_fuel = self.alkane[0]
-        self.Hy_fuel = self.alkane[1]
-        m_a1 = ((self.Cx_fuel + (self.Hy_fuel/4))*(32+28*3.76))/(12*self.Cx_fuel + self.Hy_fuel) # [kg_air/kg_fuel]
-        self.LHV = 50150 #kJ/kg
-        cp_CH4 = 35.3 #kJ/ kmol.K 
-        hf = cp_CH4 * (self.T_3*1000/(CP.PropsSI('M', 'T', T0, 'P', p0, 'CH4'))) #kJ/kg
-        print(hf)
-
+        self.set_ref()
+        self.get_R() 
+          
 
         for i in range(len(self.air)):
             self.h_1 += self.air_prop[i]*(CP.PropsSI('H','P',self.p_1,'T',self.T_1,self.air[i]))
@@ -177,25 +234,54 @@ class gas_turbine(object):
         
         self.p_2 = self.r_c*self.p_1
         self.T_2 = sc.optimize.fsolve(self.T2_func, (self.T_1+self.T_3)/2)[0]
-        self.h_2 = self.h_1 + self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*(self.T_2 - self.T_1)
-        self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2)*np.log(self.T_2/self.T_1)
-        
-        print(self.h_1, self.h_2)
-        print(self.T_1, self.T_2)
-        print(self.s_1, self.s_2)
-        print(self.p_1, self.p_2)
+        self.h_2 = self.h_1 + self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2, 'air', False)*(self.T_2 - self.T_1)
+        self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2, 'air', True)
+        self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
+
+        # self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15)
+        self.h_f = self.get_hf()
+
 
         self.p_3 = self.p_2*self.k_cc
-        self.excess_air = sc.optimize.fsolve(lambda lbd : self.lambda_func(lbd,hf,self.h_2,m_a1),1.5)[0]
-        print(self.excess_air)
+        self.lbd = fsolve(self.get_lbd, 1.0)[0]
+        self.h_3 = self.get_h3(self.lbd)
+        self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', False)*np.log(self.T_3/self.T_2) - self.R*np.log(self.p_3/self.p_2)
+        self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
+        
+        self.get_fluegas() 
 
-        
-        
         self.p_4 = self.p_1
         self.T_4 = sc.optimize.fsolve(self.T4_func, (self.T_1+self.T_3)/2)[0]
-        self.h_4 = self.h_3 - self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*(self.T_3 - self.T_4)
-        self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2)*np.log(self.T_4/self.T_3)
+        self.h_4 = self.h_3 - self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2, 'fluegas', False)*(self.T_3 - self.T_4)
+        self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2,'fluegas', True)
+        #erreur dans le cp utilisé pour le calcul de s4 ---> cp_gaz à la sortie de la turbine contient de l'eau et du CO2
+        self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
         
+
+        print('p_1 = %.2f Pa' % (self.p_1))
+        print('T_1 = %.2f C' % (self.T_1-273.15))
+        print('h_1 = %.2f kJ/kg' % (self.h_1/1e3))
+        print('s_1 = %.2f kJ/kg.K' % (self.s_1/1e3))
+        print('e_1 = %.2f kJ/kg' % (self.e_1/1e3))
+        print('----------------------------------')
+        print('p_2 = %.2f Pa' % (self.p_2))
+        print('T_2 = %.2f C' % (self.T_2-273.15))
+        print('h_2 = %.2f kJ/kg' % (self.h_2/1e3))
+        print('s_2 = %.2f kJ/kg.K' % (self.s_2/1e3))
+        print('e_2 = %.2f kJ/kg' % (self.e_2/1e3))
+        print('----------------------------------')
+        print('p_3 = %.2f Pa' % (self.p_3))
+        print('T_3 = %.2f C' % (self.T_3-273.15))
+        print('h_3 = %.2f kJ/kg' % (self.h_3/1e3))
+        print('s_3 = %.2f kJ/kg.K' % (self.s_3/1e3))
+        print('e_3 = %.2f kJ/kg' % (self.e_3/1e3))
+        print('----------------------------------')
+        print('p_4 = %.2f Pa' % (self.p_4))
+        print('T_4 = %.2f C' % (self.T_4-273.15))
+        print('h_4 = %.2f kJ/kg' % (self.h_4/1e3))
+        print('s_4 = %.2f kJ/kg.K' % (self.s_4/1e3))
+        print('e_4 = %.2f kJ/kg' % (self.e_4/1e3))
+        print('----------------------------------')
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
@@ -205,7 +291,8 @@ class gas_turbine(object):
         self.e           = self.e_1, self.e_2, self.e_3, self.e_4
         self.DAT         = self.p,self.T,self.s,self.h,self.e
         # Combustion paramters ------------------------------------------------
-        self.COMBUSTION  = self.LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
+        LHV = self.table["CH4"]["LHV"]
+        self.COMBUSTION  = LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
         # Mass flow rates -----------------------------------------------------
         self.MASSFLOW    = self.dotm_a,self.dotm_f,self.dotm_g
         # Efficiencies --------------------------------------------------------
