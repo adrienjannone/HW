@@ -201,7 +201,6 @@ class gas_turbine(object):
         # Fraction massique de chaque espèce dans les produits de combustion
         mtot = mO2 + mCO2 + mH2O + mN2
         mO2, mCO2, mH2O, mN2 = mO2/mtot, mCO2/mtot, mH2O/mtot, mN2/mtot
-        # h3
         return mO2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'O2') + mCO2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'CO2') + mH2O*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'H2O') + mN2*CP.PropsSI('H','P',self.p_3,'T',self.T_3,'N2')
 
     def get_lbd(self, lbd):
@@ -284,6 +283,15 @@ class gas_turbine(object):
         print('e_4 = %.2f kJ/kg' % (self.e_4/1e3))
         print('----------------------------------')
 
+        self.dotm_g = self.P_e/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
+        self.eta_mec = 1 - self.k_mec * (self.h_3 - self.h_4 + self.h_2 - self.h_1)/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
+        self.dotm_g = self.P_e/((self.h_3 - self.h_4 - self.h_2 + self.h_1)*self.eta_mec)
+        self.dotm_f = self.dotm_g/(self.ldb*self.ma1 + 1)
+        self.dotm_a = self.ldb*self.ma1*self.dotm_f
+
+        self.eta_cyclen = 1 - ( (1+ 1/(self.ldb*self.ma1)) *self.h_4 - self.h_1 )/( (1+ 1/(self.ldb*self.ma1))*self.h_3 - self.h_2 )
+        self.eta_toten = self.P_e/(self.dotm_f*self.table["CH4"]["LHV"])
+
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
         self.T           = self.T_1, self.T_2, self.T_3, self.T_4
@@ -293,6 +301,7 @@ class gas_turbine(object):
         self.DAT         = self.p,self.T,self.s,self.h,self.e
         # Combustion paramters ------------------------------------------------
         LHV = self.table["CH4"]["LHV"]
+        self.e_f = self.table["CH4"]["ec"]
         self.COMBUSTION  = LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
         # Mass flow rates -----------------------------------------------------
         self.MASSFLOW    = self.dotm_a,self.dotm_f,self.dotm_g
