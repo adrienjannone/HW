@@ -149,9 +149,9 @@ class gas_turbine(object):
     def cp_avg(self, T1, T2, p, name, T):
         if T == True:
             if name == "air":
-                return sc.integrate.quad(self.cp_func_T, T1, T2, args=(p,))[0]/np.log(T2/T1)
+                return sc.integrate.quad(self.cp_func_T, T1, T2, args=(p,))[0]
             elif name == "fluegas":
-                return sc.integrate.quad(self.cp_func_fluegas_T, T1, T2, args=(p,))[0]/np.log(T2/T1)
+                return sc.integrate.quad(self.cp_func_fluegas_T, T1, T2, args=(p,))[0]
         if name == "air":
             return sc.integrate.quad(self.cp_func, T1, T2, args=(p,))[0]/(T2-T1)
         elif name == "fluegas":
@@ -244,17 +244,17 @@ class gas_turbine(object):
 
         self.p_3 = self.p_2*self.k_cc
         self.lbd = fsolve(self.get_lbd, 1.0)[0]
+        self.get_fluegas() 
         self.h_3 = self.get_h3(self.lbd)
-        self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', False)*np.log(self.T_3/self.T_2) - self.R*np.log(self.p_3/self.p_2)
+        self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) - self.R*np.log(self.p_3/self.p_2)
         self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
         
-        self.get_fluegas() 
+    
 
         self.p_4 = self.p_1
         self.T_4 = sc.optimize.fsolve(self.T4_func, (self.T_1+self.T_3)/2)[0]
-        self.h_4 = self.h_3 - self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2, 'fluegas', False)*(self.T_3 - self.T_4)
+        self.h_4 = self.h_3 + self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2, 'fluegas', False)*(self.T_4 - self.T_3)
         self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2,'fluegas', True)
-        #erreur dans le cp utilisé pour le calcul de s4 ---> cp_gaz à la sortie de la turbine contient de l'eau et du CO2
         self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
         
 
