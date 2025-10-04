@@ -105,6 +105,13 @@ class gas_turbine(object):
         y = self.alkane[1]
         temp = (self.air_prop[0]/self.air_prop[1])
         self.ma1 = ( (x + (y/4)) * (CP.PropsSI("MOLAR_MASS","O2") + temp*CP.PropsSI("MOLAR_MASS","N2")) )/(CP.PropsSI("MOLAR_MASS","CH4")) # [kg_air/kg_fuel]
+        
+        if self.display:
+            self.fig_pie_en = plt.figure("Energy efficiencies")
+            self.fig_pie_ex = plt.figure("Exergy efficiencies")
+            self.fig_Ts = plt.figure("T-s diagram")
+            self.fig_ph = plt.figure("p-h diagram")
+
 
     def cp_func(self, T, p=1e+5):
         cp = 0
@@ -238,6 +245,18 @@ class gas_turbine(object):
         print("loss_rotex = {:.2f} MW".format(self.loss_rotex*1e-6))
         print("loss_combex = {:.2f} MW".format(self.loss_combex*1e-6))
         print("loss_echex = {:.2f} MW".format(self.loss_echex*1e-6))
+    
+    def pie_en(self):
+        return
+    
+    def pie_ex(self):
+        return
+    
+    def pie_Ts(self):
+        return
+    
+    def pie_ph(self):
+        return
 
     def evaluate(self):
         """
@@ -322,6 +341,6 @@ class gas_turbine(object):
         # Exergy losses -------------------------------------------------------
         self.DATEX       = self.loss_mec,self.loss_rotex,self.loss_combex,self.loss_echex
         # Energy and Exergy pie charts
-        #if self.display: self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_ph
+        if self.display: self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_ph
 
         self.print_states()
