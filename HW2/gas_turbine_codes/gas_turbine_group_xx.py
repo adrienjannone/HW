@@ -98,8 +98,8 @@ class gas_turbine(object):
         self.loss_combex = 0.0
         self.loss_echex = 0.0
 
-        self.table = {"CH4":{"LHV":50150e3, "cp":35.3, "ec":52215},} #cp in KJ/(kmole.K)
-        self.ldb = 0
+        self.table = {"CH4":{"LHV":50150e3, "cp":35.3, "ec":52215e3},} #cp in KJ/(kmole.K)
+        self.lbd = 0
 
         x = self.alkane[0]
         y = self.alkane[1]
@@ -219,16 +219,20 @@ class gas_turbine(object):
         return quad(self.cp_CH4, 273.15, self.T_3)[0]
     
     def print_states(self):
-        print("State 1: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_1, self.T_1-273.15, self.h_1*1e-3, self.s_1*1e-3, self.e_1*1e-3))
-        print("State 2: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_2, self.T_2-273.15, self.h_2*1e-3, self.s_2*1e-3, self.e_2*1e-3))
-        print("State 3: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_3, self.T_3-273.15, self.h_3*1e-3, self.s_3*1e-3, self.e_3*1e-3))
-        print("State 4: p = {:.2f} Pa, T = {:.2f} K, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_4, self.T_4-273.15, self.h_4*1e-3, self.s_4*1e-3, self.e_4*1e-3))
+        print("State 1: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_1*1e-5, self.T_1-273.15, self.h_1*1e-3, self.s_1*1e-3, self.e_1*1e-3))
+        print("State 2: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_2*1e-5, self.T_2-273.15, self.h_2*1e-3, self.s_2*1e-3, self.e_2*1e-3))
+        print("State 3: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_3*1e-5, self.T_3-273.15, self.h_3*1e-3, self.s_3*1e-3, self.e_3*1e-3))
+        print("State 4: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_4*1e-5, self.T_4-273.15, self.h_4*1e-3, self.s_4*1e-3, self.e_4*1e-3))
         print("dotm_a = {:.2f} kg/s".format(self.dotm_a))
         print("dotm_f = {:.2f} kg/s".format(self.dotm_f))
         print("dotm_g = {:.2f} kg/s".format(self.dotm_g))
-        print("eta_cyclen = {:.2f} %".format(self.eta_cyclen))
-        print("eta_toten = {:.2f} %".format(self.eta_toten))
-        print("eta_mec = {:.2f} %".format(self.eta_mec))
+        print("eta_cyclen = {:.2f}".format(self.eta_cyclen))
+        print("eta_toten = {:.2f}".format(self.eta_toten))
+        print("eta_mec = {:.2f}".format(self.eta_mec))
+        print("eta_cyclex = {:.2f}".format(self.eta_cyclex))
+        print("eta_totex = {:.2f}".format(self.eta_totex))
+        print("eta_rotex = {:.2f}".format(self.eta_rotex))
+        print("eta_combex = {:.2f}".format(self.eta_combex))
 
     def evaluate(self):
         """
@@ -256,65 +260,34 @@ class gas_turbine(object):
 
         self.p_3 = self.p_2*self.k_cc
         self.lbd = fsolve(self.get_lbd, 1.0)[0]
-        print('lbd = %.2f ' % (self.lbd))
         self.get_fluegas() 
         self.h_3 = self.get_h3(self.lbd)
         self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) - self.R*np.log(self.p_3/self.p_2)
         self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
         
     
-
         self.p_4 = self.p_1
         self.T_4 = sc.optimize.fsolve(self.T4_func, (self.T_1+self.T_3)/2)[0]
         self.h_4 = self.h_3 + self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2, 'fluegas', False)*(self.T_4 - self.T_3)
         self.s_4 = self.s_3 + ((self.eta_pi_t-1)/self.eta_pi_t)* self.cp_avg(self.T_3, self.T_4, (self.p_3+self.p_4)/2,'fluegas', True)
         self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
-        
 
-        print('p_1 = %.2f Pa' % (self.p_1))
-        print('T_1 = %.2f C' % (self.T_1-273.15))
-        print('h_1 = %.2f kJ/kg' % (self.h_1/1e3))
-        print('s_1 = %.2f kJ/kg.K' % (self.s_1/1e3))
-        print('e_1 = %.2f kJ/kg' % (self.e_1/1e3))
-        print('----------------------------------')
-        print('p_2 = %.2f Pa' % (self.p_2))
-        print('T_2 = %.2f C' % (self.T_2-273.15))
-        print('h_2 = %.2f kJ/kg' % (self.h_2/1e3))
-        print('s_2 = %.2f kJ/kg.K' % (self.s_2/1e3))
-        print('e_2 = %.2f kJ/kg' % (self.e_2/1e3))
-        print('----------------------------------')
-        print('p_3 = %.2f Pa' % (self.p_3))
-        print('T_3 = %.2f C' % (self.T_3-273.15))
-        print('h_3 = %.2f kJ/kg' % (self.h_3/1e3))
-        print('s_3 = %.2f kJ/kg.K' % (self.s_3/1e3))
-        print('e_3 = %.2f kJ/kg' % (self.e_3/1e3))
-        print('----------------------------------')
-        print('p_4 = %.2f Pa' % (self.p_4))
-        print('T_4 = %.2f C' % (self.T_4-273.15))
-        print('h_4 = %.2f kJ/kg' % (self.h_4/1e3))
-        print('s_4 = %.2f kJ/kg.K' % (self.s_4/1e3))
-        print('e_4 = %.2f kJ/kg' % (self.e_4/1e3))
-        print('----------------------------------')
-
-        self.dotm_g = self.P_e/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
-        self.eta_mec = 1 - self.k_mec * (self.h_3 - self.h_4 + self.h_2 - self.h_1)/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
-        self.dotm_g = self.P_e/((self.h_3 - self.h_4 - self.h_2 + self.h_1)*self.eta_mec)
-        self.dotm_f = self.dotm_g/(self.ldb*self.ma1 + 1)
-        self.dotm_a = self.ldb*self.ma1*self.dotm_f
-
-        self.eta_cyclen = 1 - ( (1+ 1/(self.ldb*self.ma1)) *self.h_4 - self.h_1 )/( (1+ 1/(self.ldb*self.ma1))*self.h_3 - self.h_2 )
-        self.eta_toten = self.P_e/(self.dotm_f*self.table["CH4"]["LHV"])
+        self.e_f = self.table["CH4"]["ec"]
 
         # Mass flow rates -----------------------------------------------------
+        #TODO: Vérifier le rendement mécanique
         self.eta_mec = 1 - self.k_mec * (self.h_3 - self.h_4 + self.h_2 - self.h_1)/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
         self.dotm_g = self.P_e/((self.h_3 - self.h_4 - self.h_2 + self.h_1)*self.eta_mec)
-        self.dotm_f = self.dotm_g/(self.ldb*self.ma1 + 1)
-        self.dotm_a = self.ldb*self.ma1*self.dotm_f
+        self.dotm_f = self.dotm_g/(self.lbd*self.ma1 + 1)
+        self.dotm_a = self.lbd*self.ma1*self.dotm_f
 
         # Efficiencies --------------------------------------------------------
-        self.eta_cyclen = 1 - ( (1+ 1/(self.ldb*self.ma1)) *self.h_4 - self.h_1 )/( (1+ 1/(self.ldb*self.ma1))*self.h_3 - self.h_2 )
+        self.eta_cyclen = 1 - ( (1+ 1/(self.lbd*self.ma1)) *self.h_4 - self.h_1 )/( (1+ 1/(self.lbd*self.ma1))*self.h_3 - self.h_2 )
         self.eta_toten = self.P_e/(self.dotm_f*self.table["CH4"]["LHV"])
-
+        self.eta_cyclex = (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1)) / (self.dotm_g * self.e_3 - self.dotm_a * self.e_2)
+        self.eta_totex = self.P_e / (self.dotm_f * self.e_f)
+        self.eta_rotex = (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1)) / (self.dotm_g * (self.e_3 - self.e_4) - self.dotm_a * (self.e_2 - self.e_1))
+        self.eta_combex = (self.dotm_g * self.e_3 - self.dotm_a * self.e_2) / (self.dotm_f * self.e_f)
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
