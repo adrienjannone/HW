@@ -230,6 +230,9 @@ class gas_turbine(object):
         print("State 2: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_2*1e-5, self.T_2-273.15, self.h_2*1e-3, self.s_2*1e-3, self.e_2*1e-3))
         print("State 3: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_3*1e-5, self.T_3-273.15, self.h_3*1e-3, self.s_3*1e-3, self.e_3*1e-3))
         print("State 4: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_4*1e-5, self.T_4-273.15, self.h_4*1e-3, self.s_4*1e-3, self.e_4*1e-3))
+        print("Lambda = {:.2f}".format(self.lbd))
+        print("h_f = {:.2f} kJ/kg".format(self.h_f*1e-3))
+        print("ma1 = {:.2f} kg_air/kg_fuel".format(self.ma1))
         print("dotm_a = {:.2f} kg/s".format(self.dotm_a))
         print("dotm_f = {:.2f} kg/s".format(self.dotm_f))
         print("dotm_g = {:.2f} kg/s".format(self.dotm_g))
@@ -278,9 +281,7 @@ class gas_turbine(object):
         self.s_2 = self.s_1 + (1-self.eta_pi_c)* self.cp_avg(self.T_1, self.T_2, (self.p_2+self.p_1)/2, 'air', True)
         self.e_2 = (self.h_2 - self.h_1) - self.T_1*(self.s_2 - self.s_1)
 
-        self.h_f = self.table["CH4"]["cp"] * (self.T_3 - 273.15)
-        #self.h_f = self.get_hf()
-
+        self.h_f = self.table["CH4"]["cp"] * (self.T_1 - 273.15)
 
         self.p_3 = self.p_2*self.k_cc
         self.lbd = fsolve(self.get_lbd, 1.0)[0]
