@@ -233,6 +233,11 @@ class gas_turbine(object):
         print("eta_totex = {:.2f}".format(self.eta_totex))
         print("eta_rotex = {:.2f}".format(self.eta_rotex))
         print("eta_combex = {:.2f}".format(self.eta_combex))
+        print("loss_mec = {:.2f} MW".format(self.loss_mec*1e-6))
+        print("loss_echen = {:.2f} MW".format(self.loss_echen*1e-6))
+        print("loss_rotex = {:.2f} MW".format(self.loss_rotex*1e-6))
+        print("loss_combex = {:.2f} MW".format(self.loss_combex*1e-6))
+        print("loss_echex = {:.2f} MW".format(self.loss_echex*1e-6))
 
     def evaluate(self):
         """
@@ -277,6 +282,7 @@ class gas_turbine(object):
         # Mass flow rates -----------------------------------------------------
         #TODO: Vérifier le rendement mécanique
         self.eta_mec = 1 - self.k_mec * (self.h_3 - self.h_4 + self.h_2 - self.h_1)/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
+        # self.eta_mec = 1 
         self.dotm_g = self.P_e/((self.h_3 - self.h_4 - self.h_2 + self.h_1)*self.eta_mec)
         self.dotm_f = self.dotm_g/(self.lbd*self.ma1 + 1)
         self.dotm_a = self.lbd*self.ma1*self.dotm_f
@@ -288,6 +294,13 @@ class gas_turbine(object):
         self.eta_totex = self.P_e / (self.dotm_f * self.e_f)
         self.eta_rotex = (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1)) / (self.dotm_g * (self.e_3 - self.e_4) - self.dotm_a * (self.e_2 - self.e_1))
         self.eta_combex = (self.dotm_g * self.e_3 - self.dotm_a * self.e_2) / (self.dotm_f * self.e_f)
+
+        # Energy losses -------------------------------------------------------
+        self.loss_mec = self.P_e*(1/self.eta_mec - 1)
+        self.loss_echen = self.dotm_a*(self.h_3 - self.h_2) + self.dotm_f*self.h_f - self.dotm_g*(self.h_3 - self.h_4)
+        self.loss_rotex = (self.dotm_g * (self.e_3 - self.e_4) - self.dotm_a * (self.e_2 - self.e_1)) - (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1))
+        self.loss_combex = (self.dotm_f * self.e_f) - (self.dotm_g * self.e_3 - self.dotm_a * self.e_2)
+        self.loss_echex = 0
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
