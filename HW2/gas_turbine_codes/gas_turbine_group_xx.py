@@ -180,9 +180,17 @@ class gas_turbine(object):
             M_mix += self.air_prop[i] * CP.PropsSI('MOLAR_MASS', self.air[i])
         self.R = R_u / M_mix
 
+    
+    def get_Rf(self):
+        R_u = CP.PropsSI("GAS_CONSTANT", "air")
+        M_mix = 0
+        for i in range(len(self.gas)):
+            M_mix += self.gas_prop[i] * CP.PropsSI('MOLAR_MASS', self.gas[i])
+        self.Rf = R_u / M_mix
+
     def T4_func(self, T4):
         cp = self.cp_avg(self.T_3, T4, (self.p_4+self.p_3)/2, "fluegas", False)
-        return T4 - self.T_3 * (self.p_4 / self.p_3) ** ((self.R*self.eta_pi_t) / cp)
+        return T4 - self.T_3 * (self.p_4 / self.p_3) ** ((self.Rf*self.eta_pi_t) / cp)
     
     def set_ref(self):
         # CO2 O2 N2 H2O
@@ -285,9 +293,10 @@ class gas_turbine(object):
 
         self.p_3 = self.p_2*self.k_cc
         self.lbd = fsolve(self.get_lbd, 1.0)[0]
-        self.get_fluegas() 
+        self.get_fluegas()
+        self.get_Rf() 
         self.h_3 = self.get_h3(self.lbd)
-        self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) - self.R*np.log(self.p_3/self.p_2)
+        self.s_3 = self.s_2 + self.cp_avg(self.T_2, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) - self.Rf*np.log(self.p_3/self.p_2)
         self.e_3 = (self.h_3 - self.h_1) - self.T_1*(self.s_3 - self.s_1)
         
     
