@@ -108,11 +108,6 @@ class gas_turbine(object):
         temp = (self.air_prop[0]/self.air_prop[1])
         self.ma1 = ( (x + (y/4)) * (CP.PropsSI("MOLAR_MASS","O2") + temp*CP.PropsSI("MOLAR_MASS","N2")) )/(CP.PropsSI("MOLAR_MASS","CH4")) # [kg_air/kg_fuel]
         
-        if self.display:
-            self.fig_pie_en = plt.figure("Energy efficiencies")
-            self.fig_pie_ex = plt.figure("Exergy efficiencies")
-            self.fig_Ts = plt.figure("T-s diagram")
-            self.fig_ph = plt.figure("p-h diagram")
 
 
     def cp_func(self, T, p=1e+5):
@@ -235,6 +230,80 @@ class gas_turbine(object):
     def get_hf(self):
         return quad(self.cp_CH4, 273.15, self.T_3)[0]
     
+    def generate_12_curve(self, n_points=50):
+        p_points = np.linspace(self.p_1, self.p_2, n_points)
+        T_points = []
+        s_points = []
+        h_points = []
+        
+        for p in p_points:
+            def temp_func(T):
+                cp = self.cp_avg(self.T_1, T, (p + self.p_1)/2, "air", False)
+                return T - self.T_1 * (p / self.p_1) ** (self.R / (cp * self.eta_pi_c))
+            
+            T = sc.optimize.fsolve(temp_func, (self.T_1+self.T_3)/2)[0]
+            T_points.append(T)
+            
+            h = self.h_1 + self.cp_avg(self.T_1, T, (p + self.p_1)/2, "air", False) * (T - self.T_1)
+            s = self.s_1 + (1-self.eta_pi_c)*self.cp_avg(self.T_1, T, (p + self.p_1)/2, "air", True)    
+            h_points.append(h)
+            s_points.append(s)
+        
+        return p_points, T_points, s_points, h_points
+
+    def generate_23_curve(self, n_points=50):
+        # pression plus ou moins constante --> Ds = dh/T et dh = cp*dT 
+        
+        T_points = np.linspace(self.T_2, self.T_3, n_points)
+        p_points = np.linspace(self.p_2, self.p_3, n_points) 
+        s_points = []
+        h_points = []
+        
+        for i, T in enumerate(T_points):
+            p = p_points[i]
+            h = self.h_2 + self.cp_avg(self.T_2, T, (p + self.p_2)/2, "fluegas", False) * (T - self.T_2)
+            s = self.s_2 + self.cp_avg(self.T_2, T, (p + self.p_2)/2, "fluegas", True)
+            s_points.append(s)
+            h_points.append(h)
+        
+        return p_points, T_points, s_points, h_points
+
+    def generate_34_curve(self, n_points=50):
+        p_points = np.linspace(self.p_3, self.p_4, n_points)
+        T_points = []
+        s_points = []
+        h_points = []
+        
+        for p in p_points:
+            def temp_func(T):
+                cp = self.cp_avg(self.T_3, T, (p + self.p_3)/2, "fluegas", False)
+                return T - self.T_3 * (p / self.p_3) ** ((self.Rf * self.eta_pi_t) / cp)
+            
+            
+            T = sc.optimize.fsolve(temp_func, (self.T_1+self.T_3)/2)[0]
+            T_points.append(T)
+            
+            h = self.h_3 + self.cp_avg(self.T_3, T, (p + self.p_3)/2, "fluegas", False) * (T - self.T_3)
+            s = self.s_3 + ((self.eta_pi_t - 1)/self.eta_pi_t) * self.cp_avg(self.T_3, T, (p + self.p_3)/2, "fluegas", True)
+            h_points.append(h)
+            s_points.append(s)
+        
+        return p_points, T_points, s_points, h_points
+    
+    def generate_41_curve(self, n_points=50):
+        T_points = np.linspace(self.T_4, self.T_1, n_points)
+        p_points = np.full(n_points, self.p_1) 
+        s_points = []
+        h_points = []
+        
+        for i, T in enumerate(T_points):
+            h = self.h_4 + self.cp_avg(self.T_4, T, self.p_1, "air", False) * (T - self.T_4)
+            s = self.s_4 + self.cp_avg(self.T_4, T, self.p_1, "air", True)
+            s_points.append(s)
+            h_points.append(h)
+        
+        return p_points, T_points, s_points, h_points
+    
     def print_states(self):
         print("State 1: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_1*1e-5, self.T_1-273.15, self.h_1*1e-3, self.s_1*1e-3, self.e_1*1e-3))
         print("State 2: p = {:.2f} Bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, e = {:.2f}".format(self.p_2*1e-5, self.T_2-273.15, self.h_2*1e-3, self.s_2*1e-3, self.e_2*1e-3))
@@ -260,36 +329,86 @@ class gas_turbine(object):
         print("loss_echex = {:.2f} MW".format(self.loss_echex*1e-6))
     
     def pie_en(self):
+        fig = plt.figure(num="Energy Distribution", figsize=(8, 6)) 
+        ax = fig.add_subplot(111)
         labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Exhaust gases {:.2f} MW'.format(self.loss_echen*1e-6), 'Effective power {:.2f} MW'.format(self.P_e*1e-6-self.loss_echen*1e-6-self.loss_mec*1e-6)]
         sizes = [self.loss_mec, self.loss_echen, self.P_e-(self.loss_mec+self.loss_echen)]
         colors = ['#ff9999', '#66b3ff', '#99ff99']
 
-        plt.pie(sizes, labels=labels, colors=colors,autopct='%1.1f%%', startangle=90)
+        ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
 
-        plt.title('ENERGY DISTRIBUTION')
-        plt.axis('equal')  
-        plt.show()
+        ax.set_title('ENERGY DISTRIBUTION')  
+        ax.axis('equal')  
 
-        return
-    
+        return fig
+
     def pie_ex(self):
+        fig = plt.figure(num="Exergy Distribution", figsize=(8, 6)) 
+        ax = fig.add_subplot(111)
         labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Rotor exergy losses {:.2f} MW'.format(self.loss_rotex*1e-6), 'Combustion exergy losses {:.2f} MW'.format(self.loss_combex*1e-6), 'Exhaust exergy losses {:.2f} MW'.format(self.loss_echex*1e-6), 'Effective exergy power {:.2f} MW'.format(self.P_e*1e-6-(self.loss_mec+self.loss_rotex+self.loss_combex+self.loss_echex)*1e-6)]
         sizes = [self.loss_mec, self.loss_rotex, self.loss_combex, self.loss_echex, self.P_e-(self.loss_mec+self.loss_rotex+self.loss_combex+self.loss_echex)]
         colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0']
 
-        plt.pie(sizes, labels=labels, colors=colors,autopct='%1.1f%%', startangle=90)
+        ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+        ax.set_title('EXERGY DISTRIBUTION')  
+        ax.axis('equal')
 
-        plt.title('EXERGY DISTRIBUTION')
-        plt.axis('equal')
-        plt.show()
-
-        return
+        return fig
     
     def pie_Ts(self):
-        return
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
+        p_comp, T_comp, s_comp, h_comp = self.generate_12_curve()
+        p_comb, T_comb, s_comb, h_comb = self.generate_23_curve()
+        p_exp, T_exp, s_exp, h_exp = self.generate_34_curve()
+        p_cool, T_cool, s_cool, h_cool = self.generate_41_curve()
+        
+        ax.plot([s*1e-3 for s in s_comp], [T-273.15 for T in T_comp], 'b-', linewidth=2, label='Compression (1→2)')
+        ax.plot([s*1e-3 for s in s_comb], [T-273.15 for T in T_comb], 'r-', linewidth=2, label='Combustion (2→3)')
+        ax.plot([s*1e-3 for s in s_exp], [T-273.15 for T in T_exp], 'g-', linewidth=2, label='Expansion (3→4)')
+        ax.plot([s*1e-3 for s in s_cool], [T-273.15 for T in T_cool], 'm-', linewidth=2, label='Cooling (4→1)')
+        
+        ax.plot([s*1e-3 for s in self.s], [T-273.15 for T in self.T], 'ko', markersize=8, label='State Points')
+        
+        for i, (s_val, T_val) in enumerate(zip(self.s, self.T)):
+            ax.annotate(f'{i+1}', (s_val*1e-3, T_val-273.15), 
+                    xytext=(5, 5), textcoords='offset points', fontsize=12, fontweight='bold')
+        
+        ax.set_xlabel('Entropy (kJ/kg·K)')
+        ax.set_ylabel('Temperature (°C)')
+        ax.set_title('T-s Diagram')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        
+        return fig
     
     def pie_ph(self):
-        return
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
+        p_comp, T_comp, s_comp, h_comp = self.generate_12_curve()
+        p_comb, T_comb, s_comb, h_comb = self.generate_23_curve()
+        p_exp, T_exp, s_exp, h_exp = self.generate_34_curve()
+        p_cool, T_cool, s_cool, h_cool = self.generate_41_curve()
+        
+        ax.plot([h*1e-3 for h in h_comp], [p*1e-5 for p in p_comp], 'b-', linewidth=2, label='Compression (1→2)')
+        ax.plot([h*1e-3 for h in h_comb], [p*1e-5 for p in p_comb], 'r-', linewidth=2, label='Combustion (2→3)')
+        ax.plot([h*1e-3 for h in h_exp], [p*1e-5 for p in p_exp], 'g-', linewidth=2, label='Expansion (3→4)')
+        ax.plot([h*1e-3 for h in h_cool], [p*1e-5 for p in p_cool], 'm-', linewidth=2, label='Cooling (4→1)')
+        
+        ax.plot([h*1e-3 for h in self.h], [p*1e-5 for p in self.p], 'ko', markersize=8, label='State Points')
+        
+        for i, (h_val, p_val) in enumerate(zip(self.h, self.p)):
+            ax.annotate(f'{i+1}', (h_val*1e-3, p_val*1e-5), 
+                    xytext=(5, 5), textcoords='offset points', fontsize=12, fontweight='bold')
+        
+        ax.set_xlabel('Enthalpy (kJ/kg)')
+        ax.set_ylabel('Pressure (bar)')
+        ax.set_title('p-h Diagram for Gas Turbine Cycle')
+        ax.set_yscale('log')  #(ln p, h)
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        
+        return fig
 
     def evaluate(self):
         """
@@ -377,9 +496,14 @@ class gas_turbine(object):
         self.DATEN       = self.loss_mec,self.loss_echen
         # Exergy losses -------------------------------------------------------
         self.DATEX       = self.loss_mec,self.loss_rotex,self.loss_combex,self.loss_echex
+
         # Energy and Exergy pie charts
         self.fig_pie_en = self.pie_en()
         self.fig_pie_ex = self.pie_ex()
-        if self.display: self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_ph
+        self.fig_Ts = self.pie_Ts()
+        self.fig_ph = self.pie_ph()
+        if self.display: 
+            self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_ph
+            plt.show()
 
         self.print_states()
