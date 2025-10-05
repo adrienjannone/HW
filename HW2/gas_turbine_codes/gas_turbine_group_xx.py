@@ -59,6 +59,8 @@ class gas_turbine(object):
         self.alkane             = parameters['alkane']      # alkane composition ['c','h']
         self.display            = display                   # if True, make the plots
 
+        self.T_0 = 288.15
+        self.p_0 = 1e+5
         self.p_2 = 0.0
         self.p_3 = 0.0
         self.p_4 = 0.0
@@ -307,18 +309,21 @@ class gas_turbine(object):
         self.e_4 = (self.h_4 - self.h_1) - self.T_1*(self.s_4 - self.s_1)
 
         self.e_f = self.table["CH4"]["ec"]
-
+        #self.e_f = self.cp_avg(self.T_0, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', False)*(self.T_3 - self.T_0) - self.T_0*self.cp_avg(self.T_0, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) + self.Rf*self.T_0*np.log(self.p_3/self.p_0)
+        
         # Mass flow rates -----------------------------------------------------
         #TODO: Vérifier le rendement mécanique
         self.eta_mec = 1 - self.k_mec * (self.h_3 - self.h_4 + self.h_2 - self.h_1)/(self.h_3 - self.h_4 - self.h_2 + self.h_1)
         # self.eta_mec = 1 
         self.dotm_g = self.P_e/((self.h_3 - self.h_4 - self.h_2 + self.h_1)*self.eta_mec)
+        #self.dotm_g = self.P_e/((self.h_3 - self.h_4 - (self.lbd*self.ma1/(self.lbd*self.ma1+1))*(self.h_2 - self.h_1))*self.eta_mec)
         self.dotm_f = self.dotm_g/(self.lbd*self.ma1 + 1)
         self.dotm_a = self.lbd*self.ma1*self.dotm_f
 
         # Efficiencies --------------------------------------------------------
-        self.eta_cyclen = 1 - ( (1+ 1/(self.lbd*self.ma1)) *self.h_4 - self.h_1 )/( (1+ 1/(self.lbd*self.ma1))*self.h_3 - self.h_2 )
-        self.eta_toten = self.P_e/(self.dotm_f*self.table["CH4"]["LHV"])
+        self.eta_cyclen = 1 - ( (1+ 1/(self.lbd*self.ma1)) *(self.h_4 - self.h_1 ))/( (1+ 1/(self.lbd*self.ma1))*(self.h_3 - self.h_2 ))
+        #self.eta_toten = self.P_e/(self.dotm_f*self.table["CH4"]["LHV"])
+        self.eta_toten = self.eta_mec*self.eta_cyclen
         self.eta_cyclex = (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1)) / (self.dotm_g * self.e_3 - self.dotm_a * self.e_2)
         self.eta_totex = self.P_e / (self.dotm_f * self.e_f)
         self.eta_rotex = (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1)) / (self.dotm_g * (self.e_3 - self.e_4) - self.dotm_a * (self.e_2 - self.e_1))
@@ -341,6 +346,8 @@ class gas_turbine(object):
         # Combustion paramters ------------------------------------------------
         LHV = self.table["CH4"]["LHV"]
         self.e_f = self.table["CH4"]["ec"]
+        #self.e_f = self.cp_avg(273.15, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', False)*(self.T_3 - 273.15) - 273.15*self.cp_avg(273.15, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) + self.Rf*273.15*np.log(self.p_3/1e+5)
+        self.excess_air = self.lbd
         self.COMBUSTION  = LHV,self.e_f,self.excess_air,self.gas,self.gas_prop
         # Mass flow rates -----------------------------------------------------
         self.MASSFLOW    = self.dotm_a,self.dotm_f,self.dotm_g
