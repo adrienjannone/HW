@@ -260,9 +260,29 @@ class gas_turbine(object):
         print("loss_echex = {:.2f} MW".format(self.loss_echex*1e-6))
     
     def pie_en(self):
+        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Exhaust gases {:.2f} MW'.format(self.loss_echen*1e-6), 'Effective power {:.2f} MW'.format(self.P_e*1e-6-self.loss_echen*1e-6-self.loss_mec*1e-6)]
+        sizes = [self.loss_mec, self.loss_echen, self.P_e-(self.loss_mec+self.loss_echen)]
+        colors = ['#ff9999', '#66b3ff', '#99ff99']
+
+        plt.pie(sizes, labels=labels, colors=colors,autopct='%1.1f%%', startangle=90)
+
+        plt.title('ENERGY DISTRIBUTION')
+        plt.axis('equal')  
+        plt.show()
+
         return
     
     def pie_ex(self):
+        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Rotor exergy losses {:.2f} MW'.format(self.loss_rotex*1e-6), 'Combustion exergy losses {:.2f} MW'.format(self.loss_combex*1e-6), 'Exhaust exergy losses {:.2f} MW'.format(self.loss_echex*1e-6), 'Effective exergy power {:.2f} MW'.format(self.P_e*1e-6-(self.loss_mec+self.loss_rotex+self.loss_combex+self.loss_echex)*1e-6)]
+        sizes = [self.loss_mec, self.loss_rotex, self.loss_combex, self.loss_echex, self.P_e-(self.loss_mec+self.loss_rotex+self.loss_combex+self.loss_echex)]
+        colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0']
+
+        plt.pie(sizes, labels=labels, colors=colors,autopct='%1.1f%%', startangle=90)
+
+        plt.title('EXERGY DISTRIBUTION')
+        plt.axis('equal')
+        plt.show()
+
         return
     
     def pie_Ts(self):
@@ -358,6 +378,8 @@ class gas_turbine(object):
         # Exergy losses -------------------------------------------------------
         self.DATEX       = self.loss_mec,self.loss_rotex,self.loss_combex,self.loss_echex
         # Energy and Exergy pie charts
+        self.fig_pie_en = self.pie_en()
+        self.fig_pie_ex = self.pie_ex()
         if self.display: self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_ph
 
         self.print_states()
