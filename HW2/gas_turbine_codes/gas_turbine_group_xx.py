@@ -235,8 +235,11 @@ class gas_turbine(object):
         T_points = []
         s_points = []
         h_points = []
+        T_points.append(self.T_1)
+        s_points.append(self.s_1)
+        h_points.append(self.h_1)
         
-        for p in p_points:
+        for p in p_points[1:-1]:
             def temp_func(T):
                 cp = self.cp_avg(self.T_1, T, (p + self.p_1)/2, "air", False)
                 return T - self.T_1 * (p / self.p_1) ** (self.R / (cp * self.eta_pi_c))
@@ -248,6 +251,10 @@ class gas_turbine(object):
             s = self.s_1 + (1-self.eta_pi_c)*self.cp_avg(self.T_1, T, (p + self.p_1)/2, "air", True)    
             h_points.append(h)
             s_points.append(s)
+
+        T_points.append(self.T_2)
+        s_points.append(self.s_2)
+        h_points.append(self.h_2)    
         
         return p_points, T_points, s_points, h_points
 
@@ -258,14 +265,19 @@ class gas_turbine(object):
         p_points = np.linspace(self.p_2, self.p_3, n_points) 
         s_points = []
         h_points = []
+        s_points.append(self.s_2)
+        h_points.append(self.h_2)   
         
-        for i, T in enumerate(T_points):
+        for i in range(1, len(T_points)-1):
+            T = T_points[i]
             p = p_points[i]
             h = self.h_2 + self.cp_avg(self.T_2, T, (p + self.p_2)/2, "fluegas", False) * (T - self.T_2)
             s = self.s_2 + self.cp_avg(self.T_2, T, (p + self.p_2)/2, "fluegas", True)
             s_points.append(s)
             h_points.append(h)
         
+        s_points.append(self.s_3)
+        h_points.append(self.h_3)   
         return p_points, T_points, s_points, h_points
 
     def generate_34_curve(self, n_points=50):
@@ -273,8 +285,11 @@ class gas_turbine(object):
         T_points = []
         s_points = []
         h_points = []
+        h_points.append(self.h_3)
+        s_points.append(self.s_3)
+        T_points.append(self.T_3)
         
-        for p in p_points:
+        for p in p_points[1:-1]:
             def temp_func(T):
                 cp = self.cp_avg(self.T_3, T, (p + self.p_3)/2, "fluegas", False)
                 return T - self.T_3 * (p / self.p_3) ** ((self.Rf * self.eta_pi_t) / cp)
@@ -288,6 +303,9 @@ class gas_turbine(object):
             h_points.append(h)
             s_points.append(s)
         
+        T_points.append(self.T_4)
+        s_points.append(self.s_4)
+        h_points.append(self.h_4)
         return p_points, T_points, s_points, h_points
     
     def generate_41_curve(self, n_points=50):
@@ -295,13 +313,18 @@ class gas_turbine(object):
         p_points = np.full(n_points, self.p_1) 
         s_points = []
         h_points = []
+        s_points.append(self.s_4)
+        h_points.append(self.h_4)
         
-        for i, T in enumerate(T_points):
+        for i in range(1, len(T_points)-1):
+            T = T_points[i]
             h = self.h_4 + self.cp_avg(self.T_4, T, self.p_1, "air", False) * (T - self.T_4)
             s = self.s_4 + self.cp_avg(self.T_4, T, self.p_1, "air", True)
             s_points.append(s)
             h_points.append(h)
-        
+
+        s_points.append(self.s_1)
+        h_points.append(self.h_1)
         return p_points, T_points, s_points, h_points
     
     def print_states(self):
