@@ -495,7 +495,7 @@ class gas_turbine(object):
         self.loss_echen = self.dotm_a*(self.h_3 - self.h_2) + self.dotm_f*self.h_f - self.dotm_g*(self.h_3 - self.h_4)
         self.loss_rotex = (self.dotm_g * (self.e_3 - self.e_4) - self.dotm_a * (self.e_2 - self.e_1)) - (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1))
         self.loss_combex = (self.dotm_f * self.e_f) - (self.dotm_g * self.e_3 - self.dotm_a * self.e_2)
-        self.loss_echex = 0
+        self.loss_echex = self.dotm_g * self.e_4 - self.dotm_a * self.e_1
         print(self.eta_mec)
 
         # States --------------------------------------------------------------
