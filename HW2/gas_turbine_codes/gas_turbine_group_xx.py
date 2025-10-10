@@ -354,8 +354,8 @@ class gas_turbine(object):
     def pie_en(self):
         fig = plt.figure(num="Energy Distribution", figsize=(8, 6)) 
         ax = fig.add_subplot(111)
-        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Exhaust gases {:.2f} MW'.format(self.loss_echen*1e-6), 'Effective power {:.2f} MW'.format(self.P_e*1e-6-self.loss_echen*1e-6-self.loss_mec*1e-6)]
-        sizes = [self.loss_mec, self.loss_echen, self.P_e-(self.loss_mec+self.loss_echen)]
+        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Exhaust gases {:.2f} MW'.format(self.loss_echen*1e-6), 'Effective power {:.2f} MW'.format(self.P_e*1e-6)]
+        sizes = [self.loss_mec, self.loss_echen, self.P_e]
         colors = ['#ff9999', '#66b3ff', '#99ff99']
 
         ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
@@ -368,8 +368,8 @@ class gas_turbine(object):
     def pie_ex(self):
         fig = plt.figure(num="Exergy Distribution", figsize=(8, 6)) 
         ax = fig.add_subplot(111)
-        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Rotor exergy losses {:.2f} MW'.format(self.loss_rotex*1e-6), 'Combustion exergy losses {:.2f} MW'.format(self.loss_combex*1e-6), 'Exhaust exergy losses {:.2f} MW'.format(self.loss_echex*1e-6), 'Effective exergy power {:.2f} MW'.format(self.P_e*1e-6-(self.loss_mec+self.loss_rotex+self.loss_combex+self.loss_echex)*1e-6)]
-        sizes = [self.loss_mec, self.loss_rotex, self.loss_combex, self.loss_echex, self.P_e-(self.loss_mec+self.loss_rotex+self.loss_combex+self.loss_echex)]
+        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Rotor exergy losses {:.2f} MW'.format(self.loss_rotex*1e-6), 'Combustion exergy losses {:.2f} MW'.format(self.loss_combex*1e-6), 'Exhaust exergy losses {:.2f} MW'.format(self.loss_echex*1e-6), 'Effective exergy power {:.2f} MW'.format(self.P_e*1e-6)]
+        sizes = [self.loss_mec, self.loss_rotex, self.loss_combex, self.loss_echex, self.P_e]
         colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0']
 
         ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
@@ -490,13 +490,15 @@ class gas_turbine(object):
         self.eta_rotex = (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1)) / (self.dotm_g * (self.e_3 - self.e_4) - self.dotm_a * (self.e_2 - self.e_1))
         self.eta_combex = (self.dotm_g * self.e_3 - self.dotm_a * self.e_2) / (self.dotm_f * self.e_f)
 
+        LHV = self.table["CH4"]["LHV"]
         # Energy losses -------------------------------------------------------
         self.loss_mec = self.P_e*(1/self.eta_mec - 1)
-        self.loss_echen = self.dotm_a*(self.h_3 - self.h_2) + self.dotm_f*self.h_f - self.dotm_g*(self.h_3 - self.h_4)
+        #self.loss_echen = self.dotm_a*(self.h_3 - self.h_2) + self.dotm_f*self.h_f - self.dotm_g*(self.h_3 - self.h_4)
+        self.loss_echen = (self.dotm_f*LHV)+self.dotm_a*(self.h_2 - self.h_1) - self.dotm_g*(self.h_3 - self.h_4)
         self.loss_rotex = (self.dotm_g * (self.e_3 - self.e_4) - self.dotm_a * (self.e_2 - self.e_1)) - (self.dotm_g*(self.h_3 - self.h_4) - self.dotm_a*(self.h_2 - self.h_1))
         self.loss_combex = (self.dotm_f * self.e_f) - (self.dotm_g * self.e_3 - self.dotm_a * self.e_2)
         self.loss_echex = self.dotm_g * self.e_4 - self.dotm_a * self.e_1
-        print(self.eta_mec)
+        
 
         # States --------------------------------------------------------------
         self.p           = self.p_1, self.p_2, self.p_3, self.p_4
@@ -506,7 +508,6 @@ class gas_turbine(object):
         self.e           = self.e_1, self.e_2, self.e_3, self.e_4
         self.DAT         = self.p,self.T,self.s,self.h,self.e
         # Combustion paramters ------------------------------------------------
-        LHV = self.table["CH4"]["LHV"]
         self.e_f = self.table["CH4"]["ec"]
         #self.e_f = self.cp_avg(273.15, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', False)*(self.T_3 - 273.15) - 273.15*self.cp_avg(273.15, self.T_3, (self.p_2+self.p_3)/2, 'fluegas', True) + self.Rf*273.15*np.log(self.p_3/1e+5)
         self.excess_air = self.lbd
@@ -526,7 +527,7 @@ class gas_turbine(object):
         self.fig_Ts = self.pie_Ts()
         self.fig_ph = self.pie_ph()
         if self.display: 
-            self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_ph
+            self.FIG = self.fig_pie_en, self.fig_Ts, self.fig_ph,self.fig_pie_ex
             plt.show()
 
         self.print_states()
