@@ -358,7 +358,8 @@ class gas_turbine(object):
         sizes = [self.loss_mec, self.loss_echen, self.P_e]
         colors = ['#ff9999', '#66b3ff', '#99ff99']
 
-        ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+        wedges, texts, autotexts = ax.pie(sizes,colors=colors,autopct='%1.1f%%',startangle=90)
+        ax.legend(wedges, labels, loc="center left",bbox_to_anchor=(0.75, 0, 0.5, 1))
 
         ax.set_title('ENERGY DISTRIBUTION')  
         ax.axis('equal')  
@@ -368,15 +369,20 @@ class gas_turbine(object):
     def pie_ex(self):
         fig = plt.figure(num="Exergy Distribution", figsize=(8, 6)) 
         ax = fig.add_subplot(111)
-        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec*1e-6) , 'Rotor exergy losses {:.2f} MW'.format(self.loss_rotex*1e-6), 'Combustion exergy losses {:.2f} MW'.format(self.loss_combex*1e-6), 'Exhaust exergy losses {:.2f} MW'.format(self.loss_echex*1e-6), 'Effective exergy power {:.2f} MW'.format(self.P_e*1e-6)]
+        labels = ['Mechanical losses {:.2f} MW'.format(self.loss_mec * 1e-6),'Rotor exergy losses {:.2f} MW'.format(self.loss_rotex * 1e-6),'Combustion exergy losses {:.2f} MW'.format(self.loss_combex * 1e-6),'Exhaust exergy losses {:.2f} MW'.format(self.loss_echex * 1e-6),'Effective exergy power {:.2f} MW'.format(self.P_e * 1e-6)]
         sizes = [self.loss_mec, self.loss_rotex, self.loss_combex, self.loss_echex, self.P_e]
         colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0']
 
-        ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
-        ax.set_title('EXERGY DISTRIBUTION')  
-        ax.axis('equal')
+    
+        wedges, texts, autotexts = ax.pie(sizes,colors=colors,autopct='%1.1f%%',startangle=90)
+        ax.legend(wedges, labels,loc="center left",bbox_to_anchor=(0.75, 0, 0.5, 1))
+
+        ax.set_title('EXERGY DISTRIBUTION')
+        ax.axis('equal')  
 
         return fig
+
+
     
     def pie_Ts(self):
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -426,8 +432,8 @@ class gas_turbine(object):
         
         ax.set_xlabel('Enthalpy (kJ/kg)')
         ax.set_ylabel('Pressure (bar)')
-        ax.set_title('p-h Diagram for Gas Turbine Cycle')
-        ax.set_yscale('log')  #(ln p, h)
+        ax.set_title('p-h Diagram')
+        ax.set_yscale('log')  
         ax.grid(True, alpha=0.3)
         ax.legend()
         
