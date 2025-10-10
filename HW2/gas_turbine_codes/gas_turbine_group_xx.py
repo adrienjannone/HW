@@ -395,7 +395,7 @@ class gas_turbine(object):
         ax.plot([s*1e-3 for s in s_comp], [T-273.15 for T in T_comp], 'b-', linewidth=2, label='Compression (1→2)')
         ax.plot([s*1e-3 for s in s_comb], [T-273.15 for T in T_comb], 'r-', linewidth=2, label='Combustion (2→3)')
         ax.plot([s*1e-3 for s in s_exp], [T-273.15 for T in T_exp], 'g-', linewidth=2, label='Expansion (3→4)')
-        ax.plot([s*1e-3 for s in s_cool], [T-273.15 for T in T_cool], 'm-', linewidth=2, label='Cooling (4→1)')
+        ax.plot([s*1e-3 for s in s_cool], [T-273.15 for T in T_cool], 'm-', linewidth=2, label='Exhaust (4→1)')
         
         ax.plot([s*1e-3 for s in self.s], [T-273.15 for T in self.T], 'ko', markersize=8, label='State Points')
         
@@ -422,7 +422,7 @@ class gas_turbine(object):
         ax.plot([h*1e-3 for h in h_comp], [p*1e-5 for p in p_comp], 'b-', linewidth=2, label='Compression (1→2)')
         ax.plot([h*1e-3 for h in h_comb], [p*1e-5 for p in p_comb], 'r-', linewidth=2, label='Combustion (2→3)')
         ax.plot([h*1e-3 for h in h_exp], [p*1e-5 for p in p_exp], 'g-', linewidth=2, label='Expansion (3→4)')
-        ax.plot([h*1e-3 for h in h_cool], [p*1e-5 for p in p_cool], 'm-', linewidth=2, label='Cooling (4→1)')
+        ax.plot([h*1e-3 for h in h_cool], [p*1e-5 for p in p_cool], 'm-', linewidth=2, label='Exhaust (4→1)')
         
         ax.plot([h*1e-3 for h in self.h], [p*1e-5 for p in self.p], 'ko', markersize=8, label='State Points')
         
