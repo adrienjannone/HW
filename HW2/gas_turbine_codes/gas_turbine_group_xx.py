@@ -528,12 +528,12 @@ class gas_turbine(object):
         self.DATEX       = self.loss_mec,self.loss_rotex,self.loss_combex,self.loss_echex
 
         # Energy and Exergy pie charts
-        self.fig_pie_en = self.pie_en()
-        self.fig_pie_ex = self.pie_ex()
-        self.fig_Ts = self.pie_Ts()
-        self.fig_ph = self.pie_ph()
-        if self.display: 
-            self.FIG = self.fig_pie_en, self.fig_Ts, self.fig_ph,self.fig_pie_ex
-            plt.show()
+        # self.fig_pie_en = self.pie_en()
+        # self.fig_pie_ex = self.pie_ex()
+        # self.fig_Ts = self.pie_Ts()
+        # self.fig_ph = self.pie_ph()
+        # if self.display: 
+        #     self.FIG = self.fig_pie_en, self.fig_Ts, self.fig_ph,self.fig_pie_ex
+        #     plt.show()
 
-        self.print_states()
+        # self.print_states()
