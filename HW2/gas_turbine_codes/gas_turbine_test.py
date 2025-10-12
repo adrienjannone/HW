@@ -12,7 +12,7 @@ Test code for your function
 #===IMPORT PACKAGES============================================================
 #
 
-from gas_turbine_group_xx import gas_turbine
+from gas_turbine_group_09 import gas_turbine
 
 p_1, T_1 = 1e+5, 288.15 # [Pa], [K]
 r_c = 18

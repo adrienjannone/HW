@@ -1,4 +1,4 @@
-from gas_turbine_codes.gas_turbine_group_xx import gas_turbine
+from gas_turbine_codes.gas_turbine_group_09 import gas_turbine
 import numpy as np
 import matplotlib.pyplot as plt
 
