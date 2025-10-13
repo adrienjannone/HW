@@ -12,7 +12,7 @@ Test code for your function
 # ===IMPORT PACKAGES============================================================
 #
 
-from pinch_group_zoe import heat_exchanger
+from pinch_group_xx import heat_exchanger
 
 p_hs, T_hs_su, T_hs_ex = 2e5, 220 + 273.15, 150 + 273.15  # [Pa], [K]
 T_cs_su, T_cs_ex = 125 + 273.15, 200 + 273.15  # [K]
