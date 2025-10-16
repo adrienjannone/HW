@@ -62,7 +62,8 @@ class heat_exchanger(object):
 
         self.measured_pinch = 0
         self.eta_transex = 0
-    
+
+
     def mass_ratio(self, p_evap):
         h_hs_su = CP.PropsSI("H", "T", self.T_hs_su, "P", self.p_hs, self.fluid_hs)  # [J/kg]
         h_hs_ex = CP.PropsSI("H", "T", self.T_hs_ex, "P", self.p_hs, self.fluid_hs)  # [J/kg]
@@ -74,16 +75,18 @@ class heat_exchanger(object):
         self.h_cs = (h_cs_ex - h_cs_su)  # [J/kg]
         self.m_dot_r = self.h_cs / self.h_hs
 
+
+
     def get_pinch(self, p_evap):
+        self.mass_ratio(p_evap)
         T_c = CP.PropsSI("T", "P", p_evap, "Q", 0, self.fluid_cs)  # [K] saturation temperature
         h_c = CP.PropsSI("H", "P", p_evap, "Q", 0, self.fluid_cs)  # [J/kg] saturated liquid enthalpy
         h_cs_su = CP.PropsSI("H", "T", self.T_cs_su, "P", p_evap, self.fluid_cs)  # [J/kg]
-        dh = h_cs_su - h_c
-
-        h_hs_su = CP.PropsSI("H", "T", self.T_hs_su, "P", self.p_hs, self.fluid_hs)  # [J/kg]
+        dh = h_c - h_cs_su  # [J/kg]
+        h_hs_ex = CP.PropsSI("H", "T", self.T_hs_ex, "P", self.p_hs, self.fluid_hs)  # [J/kg]
 
         
-        h_h = h_hs_su + self.m_dot_r* dh
+        h_h = h_hs_ex + dh/self.m_dot_r  # [J/kg]
         T_h = CP.PropsSI("T", "H", h_h, "P", self.p_hs, self.fluid_hs)  # [K]
         pinch = T_h - T_c  # [K]
         return pinch
@@ -103,7 +106,9 @@ class heat_exchanger(object):
         """
         self.mass_ratio(self.p_cs_guess)
         self.p_evap_solution = fsolve(self.pinch_objective, self.p_cs_guess)[0]
-
+        T1_m = (self.T_hs_su-self.T_hs_ex)/(np.log(self.T_hs_su/self.T_hs_ex))
+        T2_m = (self.T_cs_ex-self.T_cs_su)/(np.log(self.T_cs_ex/self.T_cs_su)) 
+        self.eta_transex = ((T2_m - self.T_0)/T2_m)*(T1_m/(T1_m - self.T_0))
 
         print(f"Optimal evaporation pressure: {self.p_evap_solution/1e5:.2f} bar")
         print(f"Pinch point value measured: {self.measured_pinch} K")
