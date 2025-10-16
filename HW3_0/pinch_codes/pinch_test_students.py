@@ -17,10 +17,10 @@ from pinch_group_xx import heat_exchanger
 p_hs, T_hs_su, T_hs_ex = 2e5, 220 + 273.15, 150 + 273.15  # [Pa], [K]
 T_cs_su, T_cs_ex = 125 + 273.15, 200 + 273.15  # [K]
 
-pinch_target = 5  # [K]
-wf_hot_side = "INCOMP::T72"  # Therminol 72 thermal oil
-wf_cold_side = "Heptane"  # Refrigerant
-p_cs_guess = 5e5  # Pa (5 bar)
+pinch_target = 5                # [K]
+wf_hot_side = "INCOMP::T72"     # Therminol 72 thermal oil
+wf_cold_side = "Heptane"        # Refrigerant
+p_cs_guess = 5e5                # Pa (5 bar)
 
 inputs = p_hs, T_hs_su, T_hs_ex, T_cs_su, T_cs_ex
 params = {
