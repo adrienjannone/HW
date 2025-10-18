@@ -81,7 +81,6 @@ class heat_exchanger(object):
         h_cs_su = CP.PropsSI("H", "T", self.T_cs_su, "P", p_evap, self.fluid_cs)  # [J/kg]
         dh = h_c - h_cs_su  # [J/kg]
         h_hs_ex = CP.PropsSI("H", "T", self.T_hs_ex, "P", self.p_hs, self.fluid_hs)  # [J/kg]
-
         
         h_h = h_hs_ex + dh*self.m_dot_r  # [J/kg]
         T_h = CP.PropsSI("T", "H", h_h, "P", self.p_hs, self.fluid_hs)  # [K]
@@ -90,13 +89,13 @@ class heat_exchanger(object):
         return pinch
     
     def get_pinch_exit(self, p_evap): # Pinch à la sortie de la vapeur
-        self.mass_ratio(p_evap)
-        T0 = self.T_hs_su
-        dh_hs = CP.PropsSI("H", "T", self.T_hs_su, "P", self.p_hs, self.fluid_hs) - CP.PropsSI("H", "T", self.T_hs_ex, "P", self.p_hs, self.fluid_hs)
-        h2 = CP.PropsSI("H", "T", self.T_cs_su, "P", p_evap, self.fluid_cs)
-        h3 = h2 + dh_hs/self.m_dot_r
-        T3 = CP.PropsSI("T", "H", h3, "P", p_evap, self.fluid_cs)
-        return T0 - T3
+        # self.mass_ratio(p_evap)
+        # T0 = self.T_hs_su
+        # dh_hs = CP.PropsSI("H", "T", self.T_hs_su, "P", self.p_hs, self.fluid_hs) - CP.PropsSI("H", "T", self.T_hs_ex, "P", self.p_hs, self.fluid_hs)
+        # h2 = CP.PropsSI("H", "T", self.T_cs_su, "P", p_evap, self.fluid_cs)
+        # h3 = h2 + dh_hs/self.m_dot_r
+        # T3 = CP.PropsSI("T", "H", h3, "P", p_evap, self.fluid_cs)
+        return self.T_hs_su - self.T_cs_ex
     
     def pinch_objective(self, p_evap):
         pinch = min(self.get_pinch_SAT(p_evap), self.get_pinch_exit(p_evap))
@@ -147,8 +146,6 @@ class heat_exchanger(object):
         print(f"Optimal evaporation pressure: {self.p_evap_solution/1e5:.2f} bar")
         print(f"Pinch point value measured: {self.measured_pinch} K")
         print(f"Exergy efficiency of HEX: {self.eta_transex:.2%}")
-
-        self.get_pinch_exit(self.p_evap_solution)
 
         # Figures -------------------------------------------------------------
         if self.display:
