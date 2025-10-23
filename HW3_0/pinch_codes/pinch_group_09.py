@@ -115,8 +115,8 @@ class heat_exchanger(object):
         h_cs /= h_cs[-1] # put h_cs[-1] = 1
 
         plt.figure()
-        plt.plot(h_hs, T_hs-273.15, label="Hot side")
-        plt.plot(h_cs, T_cs-273.15, label="Cold side")
+        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(self.p_hs/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(self.p_evap_solution/1e5))
         plt.xlabel("Normalized cumulative heat transfer [-]")
         plt.ylabel("Temperature [°C]")
         plt.title("Heat exchanger TQ diagram")
