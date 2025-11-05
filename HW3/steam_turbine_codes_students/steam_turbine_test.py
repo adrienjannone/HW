@@ -22,11 +22,11 @@ from steam_turbine_group_09 import steam_turbine
 p_1, p_3, p_4   = 100e+5, 310e+5, 70e+5
 p_ref, T_ref    = 1e+5,   288.15
 T_max           = 838.15
-T_cd_out        = 305.15
-T_cd_subcool    = 1
-T_pinch_sc      = 0
-T_pinch_ex      = 0
-T_pinch_cd      = 0
+T_cd_out        = 305.15 # Condenseur
+T_cd_subcool    = 1 # Condeuseur sous-refroidissement
+T_pinch_sc      = 0 # Pinch parfait
+T_pinch_ex      = 0 # Pinch parfait
+T_pinch_cd      = 0 # Pinch parfait
 T_drum          = 421.85
 x_6min          = 0.88
 eta_is_HP       = 0.92

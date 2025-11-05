@@ -8,6 +8,13 @@ Signature of the function for the steam turbine
 @date: October 30, 2022
 """
 
+"""
+Current working time : 2:00
+05/11/25 : 14:00 - 16:00
+
+
+"""
+
 #
 #===IMPORT PACKAGES============================================================
 #
@@ -63,6 +70,8 @@ class steam_turbine(object):
         self.eta_pump           = parameters['eta_pump']     # [-] internal efficiency of the pump (see text book pp. 53)
         self.k_heat             = parameters['k_heat']       # [-] pressure loss coefficient at the generator 
         self.display            = display                    # if True, make the plots
+
+        self.R = 8.314/CP.PropsSI('M','Water')               # [J/kg/K] specific gas constant for water vapor
         
     def evaluate(self):
         """
@@ -72,7 +81,62 @@ class steam_turbine(object):
         inputs and for a given electrical production. It can also plot the T-s 
         and h-s as well as the energy and exergy pies.
         """
- 
+        # Generator 
+        self.p_2 = self.p_3/self.k_heat # [Pa] pressure after generator
+
+        self.T_3 = self.T_max                                           # [K] temperature at state 3
+        self.h_3 = CP.PropsSI('H','P',self.p_3,'T',self.T_3,'Water')    # [J/kg] enthalpy at state 3
+        self.s_3 = CP.PropsSI('S','P',self.p_3,'T',self.T_3,'Water')    # [J/kg/K] entropy at state 3
+        self.x_3 = CP.PropsSI('Q','P',self.p_3,'T',self.T_3,'Water')    # [-] vapor quality at state 3
+
+        self.T_5 = self.T_max                                           # [K] temperature at state 5
+        self.p_5 = self.p_4*self.k_heat                                 # [Pa] pressure at state 5
+        self.h_5 = CP.PropsSI('H','P',self.p_5,'T',self.T_5,'Water')    # [J/kg] enthalpy at state 5
+        self.s_5 = CP.PropsSI('S','P',self.p_5,'T',self.T_5,'Water')    # [J/kg/K] entropy at state 5
+        self.x_5 = CP.PropsSI('Q','P',self.p_5,'T',self.T_5,'Water')    # [-] vapor quality at state 5        
+
+        # Turbine HP
+        h4s = CP.PropsSI('H','P',self.p_4,'S',self.s_3,'Water')         # [J/kg] isentropic enthalpy at state 4
+        self.h_4 = self.h_3 - self.eta_is_HP*(self.h_3 - h4s)           # [J/kg] enthalpy at state 4
+        self.T_4 = CP.PropsSI('T','P',self.p_4,'H',self.h_4,'Water')    # [K] temperature at state 4
+        self.s_4 = CP.PropsSI('S','P',self.p_4,'H',self.h_4,'Water')    # [J/kg/K] entropy at state 4
+        self.x_4 = CP.PropsSI('Q','P',self.p_4,'H',self.h_4,'Water')    # [-] vapor quality at state 4
+
+        # Condenser
+        # T7 subcooled of self.T_cd_subcool
+        self.T_7  = self.T_cd_out + self.T_pinch_cd                     # [K] temperature at state 7
+        self.p_7  = CP.PropsSI('P','T',self.T_7,'Q',0,'Water')          # [Pa] pressure at state 7
+        self.h_7  = CP.PropsSI('H','P',self.p_7,'T',self.T_7,'Water')   # [J/kg] enthalpy at state 7
+        self.s_7  = CP.PropsSI('S','P',self.p_7,'T',self.T_7,'Water')   # [J/kg/K] entropy at state 7
+        self.x_7  = CP.PropsSI('Q','P',self.p_7,'T',self.T_7,'Water')   # [-] vapor quality at state 7
+
+        # Drum
+        pDrum = CP.PropsSI('P','T',self.T_drum,'Q',0,'Water')            # [Pa] pressure at the drum
+        
+        # Right Side exhangers pressures
+        self.p_8 = pDrum
+        self.p_90 = pDrum
+        self.p_9I = pDrum
+        self.p_9II = pDrum
+        self.p_9III = pDrum
+        self.p_9IV = pDrum
+        self.p_7IV = pDrum
+        
+        # Left Side exchangers pressures
+        self.p_9IV = self.p_1
+        self.p_9V = self.p_1
+        self.p_9VI = self.p_1
+        self.p_9VII = self.p_1
+        self.p_9VIII = self.p_1
+
+        # Pump Pe
+        self.h_8 = self.h_7 + CP.PropsSI('V','P',self.p_7,'T',self.T_7,'Water')*(self.p_8 - self.p_7)/self.eta_pump # [J/kg] enthalpy at state 8
+        self.T_8 = CP.PropsSI('T','P',self.p_8,'H',self.h_8,'Water')    # [K] temperature at state 8
+        self.s_8 = CP.PropsSI('S','P',self.p_8,'H',self.h_8,'Water')    # [J/kg/K] entropy at state 8
+        self.x_8 = CP.PropsSI('Q','P',self.p_8,'H',self.h_8,'Water')    # [-] vapor quality at state 8
+
+        # 
+
         # >>>>>             <<<<< #    
         # Replace with your model #
         # >>>>>             <<<<< # 
