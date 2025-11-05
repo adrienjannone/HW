@@ -140,7 +140,7 @@ class heat_exchanger(object):
         # Exergy efficiency calculation ----------------------------------------
         T1_m = (self.T_hs_su-self.T_hs_ex)/(np.log(self.T_hs_su/self.T_hs_ex))
         T2_m = (self.T_cs_ex-self.T_cs_su)/(np.log(self.T_cs_ex/self.T_cs_su)) 
-        self.eta_transex = ((T2_m - self.T_0)/T2_m)*(T1_m/(T1_m - self.T_0))
+        self.eta_transex = self.m_dot_r* ((T2_m - self.T_0)/T2_m)*(T1_m/(T1_m - self.T_0))
         
 
         print(f"Optimal evaporation pressure: {self.p_evap_solution/1e5:.2f} bar")
