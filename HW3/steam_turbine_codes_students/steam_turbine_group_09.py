@@ -104,11 +104,17 @@ class steam_turbine(object):
 
         # Condenser
         # T7 subcooled of self.T_cd_subcool
+        # à modifier: le condenser n'est pas co-flow
+        # Utiliser la turbine LP pour trouver h6, puis h7
         self.T_7  = self.T_cd_out + self.T_pinch_cd                     # [K] temperature at state 7
         self.p_7  = CP.PropsSI('P','T',self.T_7,'Q',0,'Water')          # [Pa] pressure at state 7
         self.h_7  = CP.PropsSI('H','P',self.p_7,'T',self.T_7,'Water')   # [J/kg] enthalpy at state 7
         self.s_7  = CP.PropsSI('S','P',self.p_7,'T',self.T_7,'Water')   # [J/kg/K] entropy at state 7
         self.x_7  = CP.PropsSI('Q','P',self.p_7,'T',self.T_7,'Water')   # [-] vapor quality at state 7
+
+        self.T_6 = self.T_7 + self.T_cd_subcool                          # [K] temperature at state 6
+        ### COMP
+
 
         # Drum
         pDrum = CP.PropsSI('P','T',self.T_drum,'Q',0,'Water')            # [Pa] pressure at the drum
