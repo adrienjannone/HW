@@ -90,6 +90,15 @@ class steam_turbine(object):
         s_7 = CP.PropsSI('S','P',pressure,'Q',x_7,'Water')
         e_7 = (h_7 - self.h_ref) - self.T_ref*(s_7 - self.s_ref)
         return T_7, x_7, h_7, s_7, e_7
+    
+    def heat_exchangers_9(self, pressure, T_out): 
+        T_9 = T_out - self.T_pinch_ex
+        x_9 = CP.PropsSI('Q','P',pressure,'T',T_9,'Water')
+        h_9 = CP.PropsSI('H','P',pressure,'T',T_9,'Water')
+        s_9 = CP.PropsSI('S','P',pressure,'T',T_9,'Water')
+        e_9 = (h_9 - self.h_ref) - self.T_ref*(s_9 - self.s_ref)
+        return T_9, x_9, h_9, s_9, e_9
+
 
     def evaluate(self):
         """
@@ -236,7 +245,7 @@ class steam_turbine(object):
         self.e_9IV = (self.h_9IV - self.h_ref) - self.T_ref*(self.s_9IV - self.s_ref) # [J/kg] exergy at state 9IV  
         print("State 9_IV : %f %f %f %f %f %f" % (self.T_9IV,self.p_9IV,self.x_9IV,self.h_9IV,self.s_9IV,self.e_9IV))
 
-        # 7 states 
+        # states 7_I to 7_VIII 
         self.T_7I, self.x_7I, self.h_7I, self.s_7I, self.e_7I = self.saturated_liquid_7(self.p_7I)
         self.T_7II, self.x_7II, self.h_7II, self.s_7II, self.e_7II = self.saturated_liquid_7(self.p_7II)
         self.T_7III, self.x_7III, self.h_7III, self.s_7III, self.e_7III = self.saturated_liquid_7(self.p_7III)  
@@ -252,6 +261,14 @@ class steam_turbine(object):
         print("State 7_VII : %f %f %f %f %f %f" % (self.T_7VII,self.p_7VII,self.x_7VII,self.h_7VII,self.s_7VII,self.e_7VII))    
         print("State 7_VIII : %f %f %f %f %f %f" % (self.T_7VIII,self.p_7VIII,self.x_7VIII,self.h_7VIII,self.s_7VIII,self.e_7VIII))
 
+        # state 9_0 to 9_VIII
+        self.T_9I, self.x_9I, self.h_9I, self.s_9I, self.e_9I = self.heat_exchangers_9(self.p_9I, self.T_7I)
+        self.T_9II, self.x_9II, self.h_9II, self.s_9II, self.e_9II = self.heat_exchangers_9(self.p_9II, self.T_7II)
+        self.T_9III, self.x_9III, self.h_9III, self.s_9III, self.e_9III = self.heat_exchangers_9(self.p_9III, self.T_7III)
+        self.T_9V, self.x_9V, self.h_9V, self.s_9V, self.e_9V = self.heat_exchangers_9(self.p_9V, self.T_7V)
+        self.T_9VI, self.x_9VI, self.h_9VI, self.s_9VI, self.e_9VI = self.heat_exchangers_9(self.p_9VI, self.T_7VI)
+        self.T_9VII, self.x_9VII, self.h_9VII, self.s_9VII, self.e_9VII = self.heat_exchangers_9(self.p_9VII, self.T_7VII)
+        self.T_9VIII, self.x_9VIII, self.h_9VIII, self.s_9VIII, self.e_9VIII = self.heat_exchangers_9(self.p_9VIII, self.T_7VIII)
         # 
 
         # >>>>>             <<<<< #    
