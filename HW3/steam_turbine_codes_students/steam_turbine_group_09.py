@@ -116,17 +116,17 @@ class steam_turbine(object):
         self.T_7  = self.T_cd_out + self.T_pinch_cd
         self.x_7  = 0
         self.p_7  = CP.PropsSI('P','T',self.T_7,'Q',self.x_7,'Water')    # [Pa] pressure at state 7
-        self.h_7  = CP.PropsSI('H','P',self.p_1,'Q',self.x_7,'Water')    # [J/kg] enthalpy at state 7
-        self.s_7  = CP.PropsSI('S','P',self.p_1,'Q',self.x_7,'Water')    # [J/kg/K] entropy at state 7
+        self.h_7  = CP.PropsSI('H','P',self.p_7,'Q',self.x_7,'Water')    # [J/kg] enthalpy at state 7
+        self.s_7  = CP.PropsSI('S','P',self.p_7,'Q',self.x_7,'Water')    # [J/kg/K] entropy at state 7
         self.e_7  = (self.h_7 - self.h_ref) - self.T_ref*(self.s_7 - self.s_ref) # [J/kg] exergy at state 7
         print(self.T_7,self.p_7,self.x_7,self.h_7,self.s_7,self.e_7)
 
         self.T_6 = self.T_7 + self.T_cd_subcool                  # [K] temperature at state 6
-        h6s = CP.PropsSI('H','T',self.T_6,'S',self.s_4,'Water')         # [J/kg] isentropic enthalpy at state 6
+        h6s = CP.PropsSI('H','T',self.T_6,'S',self.s_5,'Water')         # [J/kg] isentropic enthalpy at state 6
         self.h_6 = self.h_5 - self.eta_is_LP*(self.h_5 - h6s)           # [J/kg] enthalpy at state 6
         self.p_6 = CP.PropsSI('P','T',self.T_6,'S',self.s_5,'Water')            # [Pa] pressure at state 6
-        self.s_6 = CP.PropsSI('S','T',self.T_6,'P',self.p_6,'Water')            # [J/kg/K] entropy at state 6
-        self.x_6 = CP.PropsSI('Q','T',self.T_6,'P',self.p_6,'Water')            # [-] vapor quality at state 6
+        self.s_6 = CP.PropsSI('S','H',self.h_6,'P',self.p_6,'Water')            # [J/kg/K] entropy at state 6
+        self.x_6 = CP.PropsSI('Q','H',self.h_6,'P',self.p_6,'Water')            # [-] vapor quality at state 6
         self.e_6 = (self.h_6 - self.h_ref) - self.T_ref*(self.s_6 - self.s_ref) # [J/kg] exergy at state 6
         print(self.T_6,self.p_6,self.x_6,self.h_6,self.s_6,self.e_6)
 
