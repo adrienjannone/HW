@@ -82,6 +82,14 @@ class steam_turbine(object):
         s_bleed = CP.PropsSI('S','H',h_bleed,'P',p_bleed,'Water')
         e_bleed = (h_bleed - self.h_ref) - self.T_ref*(s_bleed - self.s_ref)
         return T_bleed, p_bleed, x_bleed, s_bleed, e_bleed  
+    
+    def saturated_liquid_7(self, pressure):
+        x_7 = 0
+        T_7 = CP.PropsSI('T','P',pressure,'Q',x_7,'Water')
+        h_7 = CP.PropsSI('H','P',pressure,'Q',x_7,'Water')
+        s_7 = CP.PropsSI('S','P',pressure,'Q',x_7,'Water')
+        e_7 = (h_7 - self.h_ref) - self.T_ref*(s_7 - self.s_ref)
+        return T_7, x_7, h_7, s_7, e_7
 
     def evaluate(self):
         """
@@ -197,6 +205,15 @@ class steam_turbine(object):
         self.p_9VII = self.p_1
         self.p_9VIII = self.p_1
 
+        # Saturated liquid 7 pressures
+        self.p_7I = self.p_6I
+        self.p_7II = self.p_6II
+        self.p_7III = self.p_6III
+        self.p_7V = self.p_6V
+        self.p_7VI = self.p_6VI
+        self.p_7VII = self.p_6VII
+        self.p_7VIII = self.p_6VIII
+
         self.T_7IV = self.T_drum
         self.x_7IV = 0 # saturated liquid at the drum
         self.h_7IV = CP.PropsSI('H','P',self.p_7IV,'Q',self.x_7IV,'Water')    # [J/kg] enthalpy at state 7IV
@@ -218,6 +235,22 @@ class steam_turbine(object):
         self.x_9IV = CP.PropsSI('Q','P',self.p_9IV,'H',self.h_9IV,'Water')    # [-] vapor quality at state 9IV
         self.e_9IV = (self.h_9IV - self.h_ref) - self.T_ref*(self.s_9IV - self.s_ref) # [J/kg] exergy at state 9IV  
         print("State 9_IV : %f %f %f %f %f %f" % (self.T_9IV,self.p_9IV,self.x_9IV,self.h_9IV,self.s_9IV,self.e_9IV))
+
+        # 7 states 
+        self.T_7I, self.x_7I, self.h_7I, self.s_7I, self.e_7I = self.saturated_liquid_7(self.p_7I)
+        self.T_7II, self.x_7II, self.h_7II, self.s_7II, self.e_7II = self.saturated_liquid_7(self.p_7II)
+        self.T_7III, self.x_7III, self.h_7III, self.s_7III, self.e_7III = self.saturated_liquid_7(self.p_7III)  
+        self.T_7V, self.x_7V, self.h_7V, self.s_7V, self.e_7V = self.saturated_liquid_7(self.p_7V)
+        self.T_7VI, self.x_7VI, self.h_7VI, self.s_7VI, self.e_7VI = self.saturated_liquid_7(self.p_7VI)    
+        self.T_7VII, self.x_7VII, self.h_7VII, self.s_7VII, self.e_7VII = self.saturated_liquid_7(self.p_7VII)
+        self.T_7VIII, self.x_7VIII, self.h_7VIII, self.s_7VIII, self.e_7VIII = self.saturated_liquid_7(self.p_7VIII)
+        print("State 7_I : %f %f %f %f %f %f" % (self.T_7I,self.p_7I,self.x_7I,self.h_7I,self.s_7I,self.e_7I))  
+        print("State 7_II : %f %f %f %f %f %f" % (self.T_7II,self.p_7II,self.x_7II,self.h_7II,self.s_7II,self.e_7II))
+        print("State 7_III : %f %f %f %f %f %f" % (self.T_7III,self.p_7III,self.x_7III,self.h_7III,self.s_7III,self.e_7III))
+        print("State 7_V : %f %f %f %f %f %f" % (self.T_7V,self.p_7V,self.x_7V,self.h_7V,self.s_7V,self.e_7V))
+        print("State 7_VI : %f %f %f %f %f %f" % (self.T_7VI,self.p_7VI,self.x_7VI,self.h_7VI,self.s_7VI,self.e_7VI))
+        print("State 7_VII : %f %f %f %f %f %f" % (self.T_7VII,self.p_7VII,self.x_7VII,self.h_7VII,self.s_7VII,self.e_7VII))    
+        print("State 7_VIII : %f %f %f %f %f %f" % (self.T_7VIII,self.p_7VIII,self.x_7VIII,self.h_7VIII,self.s_7VIII,self.e_7VIII))
 
         # 
 
