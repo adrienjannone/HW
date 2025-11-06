@@ -73,6 +73,16 @@ class steam_turbine(object):
 
         self.R = 8.314/CP.PropsSI('M','Water')               # [J/kg/K] specific gas constant for water vapor
         
+
+    def pressure_bleedings(self,h_bleed, h_prev_bleed, s_prev_bleed):
+        h_bleed_s = h_prev_bleed - (h_prev_bleed - h_bleed)/self.eta_is_LP
+        p_bleed = CP.PropsSI('P','H',h_bleed_s,'S',s_prev_bleed,'Water')
+        T_bleed = CP.PropsSI('T','H',h_bleed,'P',p_bleed,'Water')
+        x_bleed = CP.PropsSI('Q','H',h_bleed,'P',p_bleed,'Water')
+        s_bleed = CP.PropsSI('S','H',h_bleed,'P',p_bleed,'Water')
+        e_bleed = (h_bleed - self.h_ref) - self.T_ref*(s_bleed - self.s_ref)
+        return T_bleed, p_bleed, x_bleed, s_bleed, e_bleed  
+
     def evaluate(self):
         """
         This is the main method of the steam turbine class.
@@ -148,6 +158,17 @@ class steam_turbine(object):
         self.h_6III = self.h_6IV - dh_bleed
         self.h_6II = self.h_6III - dh_bleed
         self.h_6I = self.h_6II - dh_bleed
+
+        
+        # Bleedings states
+        self.T_6VII, self.p_6VII, self.x_6VII, self.s_6VII, self.e_6VII = self.pressure_bleedings(self.h_6VII, self.h_5, self.s_5)
+        self.T_6VI, self.p_6VI, self.x_6VI, self.s_6VI, self.e_6VI = self.pressure_bleedings(self.h_6VI, self.h_6VII, self.s_6VII)
+        self.T_6V, self.p_6V, self.x_6V, self.s_6V, self.e_6V = self.pressure_bleedings(self.h_6V, self.h_6VI, self.s_6VI)
+        self.T_6IV, self.p_6IV, self.x_6IV, self.s_6IV, self.e_6IV = self.pressure_bleedings(self.h_6IV, self.h_6V, self.s_6V)
+        self.T_6III, self.p_6III, self.x_6III, self.s_6III, self.e_6III = self.pressure_bleedings(self.h_6III, self.h_6IV, self.s_6IV)
+        self.T_6II, self.p_6II, self.x_6II, self.s_6II, self.e_6II = self.pressure_bleedings(self.h_6II, self.h_6III, self.s_6III)
+        self.T_6I, self.p_6I, self.x_6I, self.s_6I, self.e_6I = self.pressure_bleedings(self.h_6I, self.h_6II, self.s_6II)
+
 
         # Drum
         pDrum = CP.PropsSI('P','T',self.T_drum,'Q',0,'Water')            # [Pa] pressure at the drum
