@@ -449,8 +449,12 @@ class steam_turbine(object):
         #      o eta_cyclex    [-]      cycle exergy efficiency
         #      o eta_condex    [-]      condenser exergy efficiency
         #      o eta_rotex     [-]      pumps and turbines exergy efficiency
+
+
         # Energy losses -------------------------------------------------------
-        self.loss_mec    = 0
+        self.loss_mec    = W_mcy*self.dotm_v - self.P_e
+        print("Mechanical energy losses loss_mec: %f W" % self.loss_mec)
+
         self.loss_conden = 0
         self.DATEN       = self.loss_mec,self.loss_conden
         #      o loss_mec      [W]      mechanical energy losses
