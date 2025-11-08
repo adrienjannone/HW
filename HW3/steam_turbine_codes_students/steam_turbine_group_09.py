@@ -342,13 +342,61 @@ class steam_turbine(object):
         self.X_6II = X[1]
         self.X_6III = X[2]
 
+        # Flow rate fraction 6IV, 6V, 6VI, 6VII, 6VIII ----------------------------------------------   
         #
+        # X_6IV (h_6IV-h_7IV) + (X_6V + X_6VI + X_6VII + X_6VIII) (h_7V - h_7IV) = (1 +  X_6VI + X_6VII + X_6VIII) (h_7IV - h_9III)
+        # X_6V (h_6V - h_7V) + (X_6VI + X_6VII + X_6VIII) (h_7VI - h_7V) = (1 + X_6I + X_6II + X_6III + X_6IV + X_6V + X_6VI + X_6VII + X_6VIII) (h_9V - h_9IV)
+        # X_6VI (h_6VI - h_7VI) + (X_6VII + X_6VIII) (h_7VII - h_7VI) = (1 + X_6I + X_6II + X_6III + X_6IV + X_6V + X_6VI + X_6VII + X_6VIII) (h_9VI - h_9V)
+        # X_6VII (h_6VII - h_7VII) + X_6VIII (h_7VIII - h_7VII) = (1 + X_6I + X_6II + X_6III + X_6IV + X_6V + X_6VI + X_6VII + X_6VIII) (h_9VII - h_9VI)
+        # X_6VIII (h_6VIII - h_7VIII) = (1 + X_6I + X_6II + X_6III + X_6IV + X_6V + X_6VI + X_6VII + X_6VIII) (h_9VIII - h_9VII)
         #
-        #
-        #
-        #
+        # Cy = D
 
+        C11 = self.h_6IV - self.h_7IV
+        C12 = self.h_7V - self.h_7IV
+        C13 = self.h_7V - self.h_7IV
+        C14 = self.h_7V - self.h_7IV
+        C15 = self.h_7V - self.h_7IV
+        C21 = self.h_9IV - self.h_9V
+        C22 = self.h_6V - self.h_7V - self.h_9V + self.h_9IV
+        C23 = self.h_7VI - self.h_7V - self.h_9V + self.h_9IV
+        C24 = self.h_7VI - self.h_7V - self.h_9V + self.h_9IV
+        C25 = self.h_7VI - self.h_7V - self.h_9V + self.h_9IV
+        C31 = self.h_9V - self.h_9VI
+        C32 = self.h_9V - self.h_9VI
+        C33 = self.h_6VI - self.h_7VI - self.h_9VI + self.h_9V
+        C34 = self.h_7VII - self.h_7VI - self.h_9VI + self.h_9V
+        C35 = self.h_7VII - self.h_7VI - self.h_9VI + self.h_9V
+        C41 = self.h_9VI - self.h_9VII
+        C42 = self.h_9VI - self.h_9VII
+        C43 = self.h_9VI - self.h_9VII
+        C44 = self.h_6VII - self.h_7VII - self.h_9VII + self.h_9VI
+        C45 = self.h_7VIII - self.h_7VII - self.h_9VII + self.h_9VI 
+        C51 = self.h_9VII - self.h_9VIII
+        C52 = self.h_9VII - self.h_9VIII
+        C53 = self.h_9VII - self.h_9VIII
+        C54 = self.h_9VII - self.h_9VIII
+        C55 = self.h_6VIII - self.h_7VIII - self.h_9VIII + self.h_9VII
+        D1 =  (1 + self.X_6I + self.X_6II + self.X_6III) * (self.h_7IV - self.h_9III)
+        D2 =  (1 + self.X_6I + self.X_6II + self.X_6III) * (self.h_9V - self.h_9IV)
+        D3 =  (1 + self.X_6I + self.X_6II + self.X_6III) * (self.h_9VI - self.h_9V) 
+        D4 =  (1 + self.X_6I + self.X_6II + self.X_6III) * (self.h_9VII - self.h_9VI)
+        D5 =  (1 + self.X_6I + self.X_6II + self.X_6III) * (self.h_9VIII - self.h_9VII) 
 
+        C = np.array([[C11, C12, C13, C14, C15],
+                      [C21, C22, C23, C24, C25],
+                      [C31, C32, C33, C34, C35],
+                      [C41, C42, C43, C44, C45],
+                      [C51, C52, C53, C54, C55]])
+        
+        D = np.array([D1, D2, D3, D4, D5])
+        Y = np.linalg.solve(C, D)
+        self.X_6IV = Y[0]
+        self.X_6V = Y[1]
+        self.X_6VI = Y[2]
+        self.X_6VII = Y[3]
+        self.X_6VIII = Y[4] 
+        
 
         # Mass flow rates -----------------------------------------------------
         self.dotm_v      =  0
