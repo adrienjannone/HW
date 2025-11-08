@@ -406,11 +406,18 @@ class steam_turbine(object):
         self.dotm_tot = self.dotm_v * (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII)
         print("Total mass flow rate dotm_tot: %f kg/s" % self.dotm_tot)
 
-        
+        self.dotm_6I    = self.X_6I * self.dotm_v
+        self.dotm_6II   = self.X_6II * self.dotm_v
+        self.dotm_6III  = self.X_6III * self.dotm_v
+        self.dotm_6IV   = self.X_6IV * self.dotm_v
+        self.dotm_6V    = self.X_6V * self.dotm_v
+        self.dotm_6VI   = self.X_6VI * self.dotm_v
+        self.dotm_6VII  = self.X_6VII * self.dotm_v
+        self.dotm_6VIII = self.X_6VIII * self.dotm_v
+
+
 
         # Mass flow rates -----------------------------------------------------
-        self.dotm_v      =  0
-        self.dotm_tot    =  0
         self.MASSFLOW    = self.dotm_v,self.dotm_tot
         #      o dotm_v         [kg/s]  mass flow rate of water at the condenser
         #      o dotm_tot       [kg/s]  total mass flow rate
@@ -438,14 +445,6 @@ class steam_turbine(object):
         #      o loss_mec      [W]      mechanical energy losses
         #      o loss_rotex    [W]      pumps and turbines exergy losses
         #      o loss_condex   [W]      condenser exergy losses
-        self.dotm_6I    = 0
-        self.dotm_6II   = 0
-        self.dotm_6III  = 0
-        self.dotm_6IV   = 0
-        self.dotm_6V    = 0
-        self.dotm_6VI   = 0
-        self.dotm_6VII  = 0
-        self.dotm_6VIII = 0
         self.XMASSFLOW  = self.dotm_6I,self.dotm_6II,self.dotm_6III,self.dotm_6IV,self.dotm_6V,self.dotm_6VI,self.dotm_6VII,self.dotm_6VIII        
         # -> massflow rate in each feedheater (w.r.t. fig. 2.33, pp. 91)
         #      o dotm_6I          [kg/s]
