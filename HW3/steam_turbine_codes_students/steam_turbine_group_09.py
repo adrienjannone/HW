@@ -166,6 +166,8 @@ class steam_turbine(object):
         self.x_6VIII = self.x_4
         self.e_6VIII = self.e_4
 
+
+        # Bleedings enthalpies - bleedings occur mid-expansion (p72)
         dh_IP_LP = self.h_5 - self.h_6
         dh_bleed = dh_IP_LP / 8 #8 bleedings
         self.h_6VII = self.h_5 - dh_bleed
@@ -214,7 +216,7 @@ class steam_turbine(object):
         self.p_9VII = self.p_1
         self.p_9VIII = self.p_1
 
-        # Saturated liquid 7 pressures
+        # Saturated liquid 7 pressures (heat exchangers are isobaric)
         self.p_7I = self.p_6I
         self.p_7II = self.p_6II
         self.p_7III = self.p_6III
@@ -269,7 +271,27 @@ class steam_turbine(object):
         self.T_9VI, self.x_9VI, self.h_9VI, self.s_9VI, self.e_9VI = self.heat_exchangers_9(self.p_9VI, self.T_7VI)
         self.T_9VII, self.x_9VII, self.h_9VII, self.s_9VII, self.e_9VII = self.heat_exchangers_9(self.p_9VII, self.T_7VII)
         self.T_9VIII, self.x_9VIII, self.h_9VIII, self.s_9VIII, self.e_9VIII = self.heat_exchangers_9(self.p_9VIII, self.T_7VIII)
+        self.T_1, self.x_1, self.h_1, self.s_1, self.e_1 = self.heat_exchangers_9(self.p_1, self.T_7VIII)
+        print("State 9_I : %f %f %f %f %f %f" % (self.T_9I,self.p_9I,self.x_9I,self.h_9I,self.s_9I,self.e_9I))
+        print("State 9_II : %f %f %f %f %f %f" % (self.T_9II,self.p_9II,self.x_9II,self.h_9II,self.s_9II,self.e_9II))
+        print("State 9_III : %f %f %f %f %f %f" % (self.T_9III,self.p_9III,self.x_9III,self.h_9III,self.s_9III,self.e_9III))
+        print("State 9_V : %f %f %f %f %f %f" % (self.T_9V,self.p_9V,self.x_9V,self.h_9V,self.s_9V,self.e_9V))
+        print("State 9_VI : %f %f %f %f %f %f" % (self.T_9VI,self.p_9VI,self.x_9VI,self.h_9VI,self.s_9VI,self.e_9VI))   
+        print("State 9_VII : %f %f %f %f %f %f" % (self.T_9VII,self.p_9VII,self.x_9VII,self.h_9VII,self.s_9VII,self.e_9VII))
+        print("State 9_VIII : %f %f %f %f %f %f" % (self.T_9VIII,self.p_9VIII,self.x_9VIII,self.h_9VIII,self.s_9VIII,self.e_9VIII))
+        print("State 1 : %f %f %f %f %f %f" % (self.T_1,self.p_1,self.x_1,self.h_1,self.s_1,self.e_1))
         # 
+
+        # state 9_0
+        self.T_90 = self.T_7I - self.T_pinch_sc
+        self.x_90 = CP.PropsSI('Q','P',self.p_90,'T',self.T_90,'Water')
+        self.h_90 = CP.PropsSI('H','P',self.p_90,'T',self.T_90,'Water')
+        self.s_90 = CP.PropsSI('S','P',self.p_90,'T',self.T_90,'Water')
+        self.e_90 = (self.h_90 - self.h_ref) - self.T_ref*(self.s_90 - self.s_ref)
+        print("State 9_0 : %f %f %f %f %f %f" % (self.T_90,self.p_90,self.x_90,self.h_90,self.s_90,self.e_90))
+    
+
+
 
         # >>>>>             <<<<< #    
         # Replace with your model #
