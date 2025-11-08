@@ -280,7 +280,6 @@ class steam_turbine(object):
         print("State 9_VII : %f %f %f %f %f %f" % (self.T_9VII,self.p_9VII,self.x_9VII,self.h_9VII,self.s_9VII,self.e_9VII))
         print("State 9_VIII : %f %f %f %f %f %f" % (self.T_9VIII,self.p_9VIII,self.x_9VIII,self.h_9VIII,self.s_9VIII,self.e_9VIII))
         print("State 1 : %f %f %f %f %f %f" % (self.T_1,self.p_1,self.x_1,self.h_1,self.s_1,self.e_1))
-        # 
 
         # state 9_0
         self.T_90 = self.T_7I - self.T_pinch_sc
@@ -396,6 +395,17 @@ class steam_turbine(object):
         self.X_6VI = Y[2]
         self.X_6VII = Y[3]
         self.X_6VIII = Y[4] 
+
+        W_mov = (self.h_6I - self.h_6) + (1 + self.X_6I) * (self.h_6II - self.h_6I) + (1 + self.X_6I + self.X_6II) * (self.h_6III - self.h_6II) + (1 + self.X_6I + self.X_6II + self.X_6III) * (self.h_6IV - self.h_6III) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV) * (self.h_6V - self.h_6IV) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V) * (self.h_6VI - self.h_6V) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI) * (self.h_6VII - self.h_6VI) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII) * (self.h_5 - self.h_6VII) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.h_3 - self.h_4) 
+        W_op = (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.h_2 - self.h_1) + (1 + self.X_6I + self.X_6II + self.X_6III) * (self.h_8 - self.h_7) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.h_9IV - self.h_7IV)
+
+        W_mcy = W_mov - W_op
+        self.dotm_v = self.P_e / (self.eta_mec*W_mcy)
+        print("Mass flow rate dotm_v: %f kg/s" % self.dotm_v) 
+
+        self.dotm_tot = self.dotm_v * (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII)
+        print("Total mass flow rate dotm_tot: %f kg/s" % self.dotm_tot)
+
         
 
         # Mass flow rates -----------------------------------------------------
