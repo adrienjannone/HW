@@ -289,14 +289,15 @@ class steam_turbine(object):
         self.e_90 = (self.h_90 - self.h_ref) - self.T_ref*(self.s_90 - self.s_ref)
         print("State 9_0 : %f %f %f %f %f %f" % (self.T_90,self.p_90,self.x_90,self.h_90,self.s_90,self.e_90))
 
-        # state 2
+        #un peu loin des valeurs du livre !!!!!
+        # state 2  
         self.h_2 = self.h_1 + CP.PropsSI('V','P',self.p_1,'T',self.T_1,'Water')*(self.p_2 - self.p_1)/self.eta_pump # [J/kg] enthalpy at state 2
         self.T_2 = CP.PropsSI('T','P',self.p_2,'H',self.h_2,'Water')    # [K] temperature at state 2
         self.s_2 = CP.PropsSI('S','P',self.p_2,'H',self.h_2,'Water')    # [J/kg/K] entropy at state 2   
         self.x_2 = CP.PropsSI('Q','P',self.p_2,'H',self.h_2,'Water')    # [-] vapor quality at state 2  
         self.e_2 = (self.h_2 - self.h_ref) - self.T_ref*(self.s_2 - self.s_ref) # [J/kg] exergy at state 2
         print("State 2 : %f %f %f %f %f %f" % (self.T_2,self.p_2,self.x_2,self.h_2,self.s_2,self.e_2))
-    
+
 
 
         # States --------------------------------------------------------------
@@ -309,6 +310,9 @@ class steam_turbine(object):
         self.DAT         = self.p,self.T,self.s,self.h,self.x,self.e
 
 
+
+
+        # Mass flow rates -----------------------------------------------------
 
         # Flow rate fraction 6I, 6II, 6III ----------------------------------------------
         #
@@ -417,15 +421,28 @@ class steam_turbine(object):
 
 
 
-        # Mass flow rates -----------------------------------------------------
         self.MASSFLOW    = self.dotm_v,self.dotm_tot
         #      o dotm_v         [kg/s]  mass flow rate of water at the condenser
         #      o dotm_tot       [kg/s]  total mass flow rate
+
+
+
+
         # Efficiencies --------------------------------------------------------
-        self.eta_cyclen  = 0
-        self.eta_cyclex  = 0
-        self.eta_condex  = 0
-        self.eta_rotex   = 0
+        self.eta_cyclen  = (W_mcy*self.dotm_v) / ((self.dotm_tot * (self.h_3 - self.h_2)) + ((self.dotm_tot-self.dotm_6VIII) * (self.h_5 - self.h_4)))
+        print("Cycle energy efficiency eta_cyclen: %f " % self.eta_cyclen)
+
+        self.eta_cyclex  = ((W_mcy*self.dotm_v) ) / ((self.dotm_tot * (self.e_3 - self.e_2)) + ((self.dotm_tot-self.dotm_6VIII) * (self.e_5 - self.e_4)))
+        print("Cycle exergy efficiency eta_cyclex: %f " % self.eta_cyclex)
+
+        self.eta_condex  = 0 # ?
+
+        W_mov_e = (self.e_6I - self.e_6) + (1 + self.X_6I) * (self.e_6II - self.e_6I) + (1 + self.X_6I + self.X_6II) * (self.e_6III - self.e_6II) + (1 + self.X_6I + self.X_6II + self.X_6III) * (self.e_6IV - self.e_6III) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV) * (self.e_6V - self.e_6IV) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V) * (self.e_6VI - self.e_6V) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI) * (self.e_6VII - self.e_6VI) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII) * (self.e_5 - self.e_6VII) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.e_3 - self.e_4) 
+        W_op_e = (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.e_2 - self.e_1) + (1 + self.X_6I + self.X_6II + self.X_6III) * (self.e_8 - self.e_7) + (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.e_9IV - self.e_7IV)
+        W_mcy_e = W_mov_e - W_op_e
+        self.eta_rotex   = W_mcy / W_mcy_e
+        print("Pumps and turbines exergy efficiency eta_rotex: %f " % self.eta_rotex)
+
         self.ETA         = self.eta_cyclen,self.eta_cyclex,self.eta_condex,self.eta_rotex
         # -> see text book pp. 53-94
         #      o eta_cyclen    [-]      cycle energy efficiency
