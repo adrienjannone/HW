@@ -21,6 +21,7 @@ Current working time : 2:00
 import CoolProp.CoolProp as CP
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy as sc
 
 #
 #===BRAYTON CYCLE - TO BE IMPLEMENTED==========================================
@@ -115,6 +116,7 @@ class steam_turbine(object):
 
         # Generator 
         self.p_2 = self.p_3/self.k_heat # [Pa] pressure after generator
+        print("Generator outlet pressure : %f Pa" % self.p_2)
 
         self.T_3 = self.T_max                                           # [K] temperature at state 3
         self.h_3 = CP.PropsSI('H','P',self.p_3,'T',self.T_3,'Water')    # [J/kg] enthalpy at state 3
@@ -291,7 +293,10 @@ class steam_turbine(object):
 
         #un peu loin des valeurs du livre !!!!!
         # state 2  
-        self.h_2 = self.h_1 + CP.PropsSI('V','P',self.p_1,'T',self.T_1,'Water')*(self.p_2 - self.p_1)/self.eta_pump # [J/kg] enthalpy at state 2
+        v_12 = sc.integrate.quad(lambda p: CP.PropsSI('V','P',p,'T',self.T_1,'Water'), self.p_1, self.p_2)[0] / (self.p_2 - self.p_1)
+        self.h_2 = self.h_1 + 0.0014*(self.p_2 - self.p_1)/self.eta_pump # [J/kg] enthalpy at state 2
+        #valeur plus porche du livre avec v_12 = 0.0014 m3/kg != v_12 en intégrant
+        #print(CP.PropsSI('V','P',self.p_1,'T',self.T_1,'Water'))  -> v_1 
         self.T_2 = CP.PropsSI('T','P',self.p_2,'H',self.h_2,'Water')    # [K] temperature at state 2
         self.s_2 = CP.PropsSI('S','P',self.p_2,'H',self.h_2,'Water')    # [J/kg/K] entropy at state 2   
         self.x_2 = CP.PropsSI('Q','P',self.p_2,'H',self.h_2,'Water')    # [-] vapor quality at state 2  
