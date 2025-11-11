@@ -507,9 +507,17 @@ class steam_turbine(object):
         s_7VIs = CP.PropsSI('S','P',p_7VIs,'Q',x_7VIs,'Water')
         e_7VIs = (h_7VIs - self.h_ref) - self.T_ref*(s_7VIs - self.s_ref)
 
+        loss_transex_R6 = self.dotm_v * (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.e_9V - self.e_9VI) - self.dotm_v * (self.X_6VI) * (self.e_7VI - e_7VIs) - self.dotm_v * (self.X_6VII + self.X_6VIII) * (self.e_7VI - self.e_7VII)
+        #print("Transfer exergy losses part R6 loss_transex_R6: %f W" % loss_transex_R6)
+        loss_transex_R7 = self.dotm_v * (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.e_9VI - self.e_9VII) - self.dotm_v * (self.X_6VII) * (self.e_7VII - e_7VIIs) - self.dotm_v * (self.X_6VIII) * (self.e_7VII - self.e_7VIII)
+        #print("Transfer exergy losses part R7 loss_transex_R7: %f W" % loss_transex_R7)
+        loss_transex_R8 = self.dotm_v * (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.e_9VII - self.e_9VIII) - self.dotm_v * (self.X_6VIII) * (self.e_7VIII - e_7VIIIs)
+        #print("Transfer exergy losses part R8 loss_transex_R8: %f W" % loss_transex_R8)
+        loss_transex_desuperheaters = self.dotm_v * (1 + self.X_6I + self.X_6II + self.X_6III + self.X_6IV + self.X_6V + self.X_6VI + self.X_6VII + self.X_6VIII) * (self.e_9VIII - self.e_1) - self.dotm_v * (self.X_6VIII) * (e_7VIIIs - self.e_6VIII) - self.dotm_v * (self.X_6VII) * (e_7VIIs - self.e_6VII) - self.dotm_v * (self.X_6VI) * (e_7VIs - self.e_6VI)
+        #print("Transfer exergy losses part desuperheaters loss_transex_desuperheaters: %f W" % loss_transex_desuperheaters)
 
-
-        self.loss_transex = loss_transex_R0 + loss_transex_R1
+        self.loss_transex = loss_transex_R0 + loss_transex_R1 + loss_transex_R2 + loss_transex_R3 + loss_transex_drum + loss_transex_R5 + loss_transex_R6 + loss_transex_R7 + loss_transex_R8 + loss_transex_desuperheaters
+        print("Total transfer exergy losses loss_transex: %f W" % self.loss_transex)
         #      o loss_mec      [W]      mechanical energy losses
         #      o loss_rotex    [W]      pumps and turbines exergy losses
         #      o loss_condex   [W]      condenser exergy losses
