@@ -59,5 +59,6 @@ params =  {'p_1':          p_1,
 
 my_ST = steam_turbine(inputs,params,True)
 my_ST.evaluate()
+my_ST.print_results()
 
 eta_en = my_ST.eta_cyclen
