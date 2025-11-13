@@ -99,6 +99,71 @@ class steam_turbine(object):
         s_9 = CP.PropsSI('S','P',pressure,'T',T_9,'Water')
         e_9 = (h_9 - self.h_ref) - self.T_ref*(s_9 - self.s_ref)
         return T_9, x_9, h_9, s_9, e_9
+    
+    def print_results(self):
+        print("States :")
+        print("State 1 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_1-273.13,self.p_1*1e-3,self.x_1,self.h_1*1e-3,self.s_1*1e-3,self.e_1*1e-3))
+        print("State 2 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_2-273.13,self.p_2*1e-3,self.x_2,self.h_2*1e-3,self.s_2*1e-3,self.e_2*1e-3))
+        print("State 3 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_3-273.13,self.p_3*1e-3,self.x_3,self.h_3*1e-3,self.s_3*1e-3,self.e_3*1e-3))
+        print("State 4 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_4-273.13,self.p_4*1e-3,self.x_4,self.h_4*1e-3,self.s_4*1e-3,self.e_4*1e-3))
+        print("State 5 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_5-273.13,self.p_5*1e-3,self.x_5,self.h_5*1e-3,self.s_5*1e-3,self.e_5*1e-3))
+        print("State 6 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6-273.13,self.p_6*1e-3,self.x_6,self.h_6*1e-3,self.s_6*1e-3,self.e_6*1e-3))
+        print("State 6_I : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6I-273.13,self.p_6I*1e-3,self.x_6I,self.h_6I*1e-3,self.s_6I*1e-3,self.e_6I*1e-3))
+        print("State 6_II : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6II-273.13,self.p_6II*1e-3,self.x_6II,self.h_6II*1e-3,self.s_6II*1e-3,self.e_6II*1e-3))
+        print("State 6_III : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6III-273.13,self.p_6III*1e-3,self.x_6III,self.h_6III*1e-3,self.s_6III*1e-3,self.e_6III*1e-3))
+        print("State 6_IV : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6IV-273.13,self.p_6IV*1e-3,self.x_6IV,self.h_6IV*1e-3,self.s_6IV*1e-3,self.e_6IV*1e-3))
+        print("State 6_V : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6V-273.13,self.p_6V*1e-3,self.x_6V,self.h_6V*1e-3,self.s_6V*1e-3,self.e_6V*1e-3))
+        print("State 6_VI : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6VI-273.13,self.p_6VI*1e-3,self.x_6VI,self.h_6VI*1e-3,self.s_6VI*1e-3,self.e_6VI*1e-3))
+        print("State 6_VII : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6VII-273.13,self.p_6VII*1e-3,self.x_6VII,self.h_6VII*1e-3,self.s_6VII*1e-3,self.e_6VII*1e-3))
+        print("State 6_VIII : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_6VIII-273.13,self.p_6VIII*1e-3,self.x_6VIII,self.h_6VIII*1e-3,self.s_6VIII*1e-3,self.e_6VIII*1e-3))
+        print("State 7 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7-273.13,self.p_7*1e-3,self.x_7,self.h_7*1e-3,self.s_7*1e-3,self.e_7*1e-3))
+        print("State 7_I : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7I-273.13,self.p_7I*1e-3,self.x_7I,self.h_7I*1e-3,self.s_7I*1e-3,self.e_7I*1e-3))
+        print("State 7_II : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7II-273.13,self.p_7II*1e-3,self.x_7II,self.h_7II*1e-3,self.s_7II*1e-3,self.e_7II*1e-3))
+        print("State 7_III : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7III-273.13,self.p_7III*1e-3,self.x_7III,self.h_7III*1e-3,self.s_7III*1e-3,self.e_7III*1e-3))
+        print("State 7_IV : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7IV-273.13,self.p_7IV*1e-3,self.x_7IV,self.h_7IV*1e-3,self.s_7IV*1e-3,self.e_7IV*1e-3))
+        print("State 7_V : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7V-273.13,self.p_7V*1e-3,self.x_7V,self.h_7V*1e-3,self.s_7V*1e-3,self.e_7V*1e-3))
+        print("State 7_VI : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7VI-273.13,self.p_7VI*1e-3,self.x_7VI,self.h_7VI*1e-3,self.s_7VI*1e-3,self.e_7VI*1e-3))
+        print("State 7_VII : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7VII-273.13,self.p_7VII*1e-3,self.x_7VII,self.h_7VII*1e-3,self.s_7VII*1e-3,self.e_7VII*1e-3))
+        print("State 7_VIII : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_7VIII-273.13,self.p_7VIII*1e-3,self.x_7VIII,self.h_7VIII*1e-3,self.s_7VIII*1e-3,self.e_7VIII*1e-3))
+        print("State 8 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_8-273.13,self.p_8*1e-3,self.x_8,self.h_8*1e-3,self.s_8*1e-3,self.e_8*1e-3))
+        print("State 9 : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_90-273.13,self.p_90*1e-3,self.x_90,self.h_90*1e-3,self.s_90*1e-3,self.e_90*1e-3))
+        print("State 9_I : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9I-273.13,self.p_9I*1e-3,self.x_9I,self.h_9I*1e-3,self.s_9I*1e-3,self.e_9I*1e-3))
+        print("State 9_II : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9II-273.13,self.p_9II*1e-3,self.x_9II,self.h_9II*1e-3,self.s_9II*1e-3,self.e_9II*1e-3))
+        print("State 9_III : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9III-273.13,self.p_9III*1e-3,self.x_9III,self.h_9III*1e-3,self.s_9III*1e-3,self.e_9III*1e-3))
+        print("State 9_IV : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9IV-273.13,self.p_9IV*1e-3,self.x_9IV,self.h_9IV*1e-3,self.s_9IV*1e-3,self.e_9IV*1e-3))
+        print("State 9_V : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9V-273.13,self.p_9V*1e-3,self.x_9V,self.h_9V*1e-3,self.s_9V*1e-3,self.e_9V*1e-3))
+        print("State 9_VI : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9VI-273.13,self.p_9VI*1e-3,self.x_9VI,self.h_9VI*1e-3,self.s_9VI*1e-3,self.e_9VI*1e-3))
+        print("State 9_VII : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9VII-273.13,self.p_9VII*1e-3,self.x_9VII,self.h_9VII*1e-3,self.s_9VII*1e-3,self.e_9VII*1e-3))
+        print("State 9_VIII : %fC, %fKPa, %f, %fKJ/Kg, %fKJ/KgK, %fKJ/Kg" % (self.T_9VIII-273.13,self.p_9VIII*1e-3,self.x_9VIII,self.h_9VIII*1e-3,self.s_9VIII*1e-3,self.e_9VIII*1e-3))
+
+        print("Flow rates :")
+        print("Mass flow rate dotm_v: %f kg/s" % self.dotm_v) 
+
+    def fig_pie_en(self):
+        labels = 'Mechanical losses', 'Condenser losses'
+        sizes = [self.loss_mec, self.loss_conden]
+        fig1, ax1 = plt.subplots()
+        ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+        ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        plt.title('Energy Losses Distribution')
+        plt.show()
+        return fig1
+    
+    def fig_pie_ex(self):
+        labels = 'Mechanical losses', 'Pumps and turbines losses', 'Condenser losses'
+        sizes = [self.loss_mec, self.loss_rotex, self.loss_condex]
+        fig2, ax2 = plt.subplots()
+        ax2.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+        ax2.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        plt.title('Exergy Losses Distribution')
+        plt.show()
+        return fig2
+    
+    def fig_hs(self):
+        return
+    
+    def fig_Ts(self):
+        return
 
 
     def evaluate(self):
@@ -532,7 +597,7 @@ class steam_turbine(object):
 
 
         # Energy and Exergy pie charts ----------------------------------------
-        #if self.display: self.FIG = self.fig_pie_en,self.fig_pie_ex, self.fig_Ts, self.fig_hs
+        if self.display: self.FIG = self.fig_pie_en(),self.fig_pie_ex(), self.fig_Ts(), self.fig_hs()
         #      o fig_pie_en: pie chart of energy losses
         #      o fig_pie_ex: pie chart of exergy losses
         #      o fig_Ts_diagram: T-s diagram of the ST cycle
