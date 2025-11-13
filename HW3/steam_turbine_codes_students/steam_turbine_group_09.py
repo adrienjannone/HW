@@ -392,14 +392,14 @@ class steam_turbine(object):
     def double_reheating(self):
         p_1_dr = self.p_1
 
-        p_3_dr = 350e5
+        p_3_dr = 340e5
         T_3_dr = self.T_max
         h_3_dr = CP.PropsSI('H','P',p_3_dr,'T',T_3_dr,'Water')  
         s_3_dr = CP.PropsSI('S','P',p_3_dr,'T',T_3_dr,'Water')  
         x_3_dr = CP.PropsSI('Q','P',p_3_dr,'T',T_3_dr,'Water')  
         e_3_dr = (h_3_dr - self.h_ref) - self.T_ref*(s_3_dr - self.s_ref)   
 
-        p_4_dr = self.p_3/self.k_heat
+        p_4_dr = (100e5)/self.k_heat
         h_4_drs = CP.PropsSI('H','P',p_4_dr,'S',s_3_dr,'Water')   
         h_4_dr = h_3_dr - self.eta_is_HP*(h_3_dr - h_4_drs)
         T_4_dr = CP.PropsSI('T','P',p_4_dr,'H',h_4_dr,'Water')
@@ -407,7 +407,7 @@ class steam_turbine(object):
         x_4_dr = CP.PropsSI('Q','P',p_4_dr,'H',h_4_dr,'Water')
         e_4_dr = (h_4_dr - self.h_ref) - self.T_ref*(s_4_dr - self.s_ref)
 
-        p_5_dr = self.p_3
+        p_5_dr = 100e5
         T_5_dr = self.T_max
         h_5_dr = CP.PropsSI('H','P',p_5_dr,'T',T_5_dr,'Water')
         s_5_dr = CP.PropsSI('S','P',p_5_dr,'T',T_5_dr,'Water')
@@ -565,9 +565,30 @@ class steam_turbine(object):
         X_6VII_dr = Y_dr[3]
         X_6VIII_dr = Y_dr[4]    
 
+
+        W_mov_dr = (h_6I_dr - h_6_dr) + \
+           (1 + X_6I_dr) * (h_6II_dr - h_6I_dr) + \
+           (1 + X_6I_dr + X_6II_dr) * (h_6III_dr - h_6II_dr) + \
+           (1 + X_6I_dr + X_6II_dr + X_6III_dr) * (h_6IV_dr - h_6III_dr) + \
+           (1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr) * (h_6V_dr - h_6IV_dr) + \
+           (1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr + X_6V_dr) * (h_6VI_dr - h_6V_dr) + \
+           (1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr + X_6V_dr + X_6VI_dr) * (h_5b_dr - h_6VI_dr) + \
+           (1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr + X_6V_dr + X_6VI_dr + X_6VII_dr) * (h_5_dr - h_4b_dr) + \
+           (1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr + X_6V_dr + X_6VI_dr + X_6VII_dr + X_6VIII_dr) * (h_3_dr - h_4_dr)
         
+        W_op_dr = (1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr + X_6V_dr + X_6VI_dr + X_6VII_dr + X_6VIII_dr) * (h_2_dr - h_1_dr) + \
+          (1 + X_6I_dr + X_6II_dr + X_6III_dr) * (h_8_dr - h_7_dr) + \
+          (1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr + X_6V_dr + X_6VI_dr + X_6VII_dr + X_6VIII_dr) * (h_9IV_dr - h_7IV_dr)     
+        
+        W_mcy_dr = W_mov_dr - W_op_dr
+        dotm_v_dr = self.P_e / (self.eta_mec*W_mcy_dr)
+        print(dotm_v_dr)
 
-
+        dotm_tot_dr = dotm_v_dr*(1 + X_6I_dr + X_6II_dr + X_6III_dr + X_6IV_dr + X_6V_dr + X_6VI_dr + X_6VII_dr + X_6VIII_dr)
+        eta_cyclen_dr  = (W_mcy_dr*dotm_v_dr) / (dotm_tot_dr * (h_3_dr - h_2_dr)+ ((dotm_tot_dr - dotm_v_dr* (X_6VIII_dr)) * (h_5_dr - h_4_dr)) + ((dotm_tot_dr - dotm_v_dr* (X_6VIII_dr + X_6VII_dr)) * (h_5b_dr - h_4b_dr)))
+        eta_cyclex_dr  = ((W_mcy_dr*dotm_v_dr) ) / (dotm_tot_dr * (e_3_dr - e_2_dr)+ ((dotm_tot_dr - dotm_v_dr* (X_6VIII_dr)) * (e_5_dr - e_4_dr)) + ((dotm_tot_dr - dotm_v_dr* (X_6VIII_dr + X_6VII_dr)) * (e_5b_dr - e_4b_dr)))
+        
+        print(eta_cyclen_dr, eta_cyclex_dr) 
         return 
 
 
@@ -971,6 +992,7 @@ class steam_turbine(object):
 
         self.print_results()
         self.without_reheating()
+        self.double_reheating()
         # Energy and Exergy pie charts ----------------------------------------
         if self.display: self.FIG = self.fig_pie_en(),self.fig_pie_ex(), self.fig_Ts(), self.fig_hs()
         #      o fig_pie_en: pie chart of energy losses
