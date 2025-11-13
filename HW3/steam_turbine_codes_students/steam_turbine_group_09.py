@@ -389,6 +389,187 @@ class steam_turbine(object):
 
         return
 
+    def double_reheating(self):
+        p_1_dr = self.p_1
+
+        p_3_dr = 350e5
+        T_3_dr = self.T_max
+        h_3_dr = CP.PropsSI('H','P',p_3_dr,'T',T_3_dr,'Water')  
+        s_3_dr = CP.PropsSI('S','P',p_3_dr,'T',T_3_dr,'Water')  
+        x_3_dr = CP.PropsSI('Q','P',p_3_dr,'T',T_3_dr,'Water')  
+        e_3_dr = (h_3_dr - self.h_ref) - self.T_ref*(s_3_dr - self.s_ref)   
+
+        p_4_dr = self.p_3/self.k_heat
+        h_4_drs = CP.PropsSI('H','P',p_4_dr,'S',s_3_dr,'Water')   
+        h_4_dr = h_3_dr - self.eta_is_HP*(h_3_dr - h_4_drs)
+        T_4_dr = CP.PropsSI('T','P',p_4_dr,'H',h_4_dr,'Water')
+        s_4_dr = CP.PropsSI('S','P',p_4_dr,'H',h_4_dr,'Water')
+        x_4_dr = CP.PropsSI('Q','P',p_4_dr,'H',h_4_dr,'Water')
+        e_4_dr = (h_4_dr - self.h_ref) - self.T_ref*(s_4_dr - self.s_ref)
+
+        p_5_dr = self.p_3
+        T_5_dr = self.T_max
+        h_5_dr = CP.PropsSI('H','P',p_5_dr,'T',T_5_dr,'Water')
+        s_5_dr = CP.PropsSI('S','P',p_5_dr,'T',T_5_dr,'Water')
+        x_5_dr = CP.PropsSI('Q','P',p_5_dr,'T',T_5_dr,'Water')
+        e_5_dr = (h_5_dr - self.h_ref) - self.T_ref*(s_5_dr - self.s_ref)
+
+        p_4b_dr = self.p_4
+        h_4b_drs = CP.PropsSI('H','P',p_4b_dr,'S',s_5_dr,'Water')
+        h_4b_dr = h_5_dr - self.eta_is_HP*(h_5_dr - h_4b_drs)
+        T_4b_dr = CP.PropsSI('T','P',p_4b_dr,'H',h_4b_dr,'Water')
+        s_4b_dr = CP.PropsSI('S','P',p_4b_dr,'H',h_4b_dr,'Water')
+        x_4b_dr = CP.PropsSI('Q','P',p_4b_dr,'H',h_4b_dr,'Water')
+        e_4b_dr = (h_4b_dr - self.h_ref) - self.T_ref*(s_4b_dr - self.s_ref)
+
+        p_5b_dr = self.p_5
+        T_5b_dr = self.T_max
+        h_5b_dr = CP.PropsSI('H','P',p_5b_dr,'T',T_5b_dr,'Water')
+        s_5b_dr = CP.PropsSI('S','P',p_5b_dr,'T',T_5b_dr,'Water')
+        x_5b_dr = CP.PropsSI('Q','P',p_5b_dr,'T',T_5b_dr,'Water')   
+        e_5b_dr = (h_5b_dr - self.h_ref) - self.T_ref*(s_5b_dr - self.s_ref) 
+
+        p_7_dr, T_7_dr, x_7_dr, h_7_dr, s_7_dr, e_7_dr = self.p_7, self.T_7, self.x_7, self.h_7, self.s_7, self.e_7
+        p_6_dr, T_6_dr, x_6_dr, h_6_dr, s_6_dr, e_6_dr = self.p_6, self.T_6, self.x_6, self.h_6, self.s_6, self.e_6
+        p_8_dr, T_8_dr, x_8_dr, h_8_dr, s_8_dr, e_8_dr = self.p_8, self.T_8, self.x_8, self.h_8, self.s_8, self.e_8   
+
+
+        p_6VIII_dr, T_6VIII_dr, x_6VIII_dr, h_6VIII_dr, s_6VIII_dr, e_6VIII_dr = p_4_dr, T_4_dr, x_4_dr, h_4_dr, s_4_dr, e_4_dr
+        p_6VII_dr, T_6VII_dr, x_6VII_dr, h_6VII_dr, s_6VII_dr, e_6VII_dr = p_4b_dr, T_4b_dr, x_4b_dr, h_4b_dr, s_4b_dr, e_4b_dr
+
+        dh_IP_LP = h_5b_dr - h_6_dr
+        dh_bleed = dh_IP_LP / 7 #7 bleedings
+        h_6VI_dr = h_5b_dr - dh_bleed
+        h_6V_dr = h_6VI_dr - dh_bleed
+        h_6IV_dr = h_6V_dr - dh_bleed
+        h_6III_dr = h_6IV_dr - dh_bleed
+        h_6II_dr = h_6III_dr - dh_bleed
+        h_6I_dr = h_6II_dr - dh_bleed
+
+        T_6VI_dr, p_6VI_dr, x_6VI_dr, s_6VI_dr, e_6VI_dr = self.pressure_bleedings(h_6VI_dr, h_5b_dr, s_5b_dr)
+        T_6V_dr, p_6V_dr, x_6V_dr, s_6V_dr, e_6V_dr = self.pressure_bleedings(h_6V_dr, h_6VI_dr, s_6VI_dr)  
+        T_6IV_dr, p_6IV_dr, x_6IV_dr, s_6IV_dr, e_6IV_dr = self.pressure_bleedings(h_6IV_dr, h_6V_dr, s_6V_dr)
+        T_6III_dr, p_6III_dr, x_6III_dr, s_6III_dr, e_6III_dr = self.pressure_bleedings(h_6III_dr, h_6IV_dr, s_6IV_dr)
+        T_6II_dr, p_6II_dr, x_6II_dr, s_6II_dr, e_6II_dr = self.pressure_bleedings(h_6II_dr, h_6III_dr, s_6III_dr)  
+        T_6I_dr, p_6I_dr, x_6I_dr, s_6I_dr, e_6I_dr = self.pressure_bleedings(h_6I_dr, h_6II_dr, s_6II_dr)
+
+        p_7I_dr = p_6I_dr
+        p_7II_dr = p_6II_dr
+        p_7III_dr = p_6III_dr
+        p_7V_dr = p_6V_dr
+        p_7VI_dr = p_6VI_dr
+        p_7VII_dr = p_6VII_dr
+        p_7VIII_dr = p_6VIII_dr
+
+        T_7I_dr, x_7I_dr, h_7I_dr, s_7I_dr, e_7I_dr = self.saturated_liquid_7(p_6I_dr)
+        T_7II_dr, x_7II_dr, h_7II_dr, s_7II_dr, e_7II_dr = self.saturated_liquid_7(p_6II_dr)
+        T_7III_dr, x_7III_dr, h_7III_dr, s_7III_dr, e_7III_dr = self.saturated_liquid_7(p_6III_dr)
+        p_7IV_dr, T_7IV_dr, x_7IV_dr, h_7IV_dr, s_7IV_dr, e_7IV_dr = self.p_7IV, self.T_7IV, self.x_7IV, self.h_7IV, self.s_7IV, self.e_7IV
+        T_7V_dr, x_7V_dr, h_7V_dr, s_7V_dr, e_7V_dr = self.saturated_liquid_7(p_6V_dr)
+        T_7VI_dr, x_7VI_dr, h_7VI_dr, s_7VI_dr, e_7VI_dr = self.saturated_liquid_7(p_6VI_dr)
+        T_7VII_dr, x_7VII_dr, h_7VII_dr, s_7VII_dr, e_7VII_dr = self.saturated_liquid_7(p_6VII_dr)
+        T_7VIII_dr, x_7VIII_dr, h_7VIII_dr, s_7VIII_dr, e_7VIII_dr = self.saturated_liquid_7(p_6VIII_dr)
+
+        p_90_dr = p_8_dr
+        p_9I_dr = p_8_dr
+        p_9II_dr = p_8_dr
+        p_9III_dr = p_8_dr
+        p_7IV_dr = p_8_dr   
+
+        p_9IV_dr = p_1_dr
+        p_9V_dr = p_1_dr
+        p_9VI_dr = p_1_dr
+        p_9VII_dr = p_1_dr
+        p_9VIII_dr = p_1_dr
+
+        p_9IV_dr, T_9IV_dr, x_9IV_dr, h_9IV_dr, s_9IV_dr, e_9IV_dr = self.p_9IV, self.T_9IV, self.x_9IV, self.h_9IV, self.s_9IV, self.e_9IV
+        T_9I_dr, x_9I_dr, h_9I_dr, s_9I_dr, e_9I_dr = self.heat_exchangers_9(p_9IV_dr, T_7I_dr)
+        T_9II_dr, x_9II_dr, h_9II_dr, s_9II_dr, e_9II_dr = self.heat_exchangers_9(p_9IV_dr, T_7II_dr)
+        T_9III_dr, x_9III_dr, h_9III_dr, s_9III_dr, e_9III_dr = self.heat_exchangers_9(p_9IV_dr, T_7III_dr)
+        T_9V_dr, x_9V_dr, h_9V_dr, s_9V_dr, e_9V_dr = self.heat_exchangers_9(p_9IV_dr, T_7V_dr)
+        T_9VI_dr, x_9VI_dr, h_9VI_dr, s_9VI_dr, e_9VI_dr = self.heat_exchangers_9(p_9IV_dr, T_7VI_dr)
+        T_9VII_dr, x_9VII_dr, h_9VII_dr, s_9VII_dr, e_9VII_dr = self.heat_exchangers_9(p_9IV_dr, T_7VII_dr)
+        T_9VIII_dr, x_9VIII_dr, h_9VIII_dr, s_9VIII_dr, e_9VIII_dr = self.heat_exchangers_9(p_9IV_dr, T_7VIII_dr)
+        T_90_dr, x_90_dr, h_90_dr, s_90_dr, e_90_dr = self.heat_exchangers_9(p_90_dr, T_8_dr)
+        T_1_dr, x_1_dr, h_1_dr, s_1_dr, e_1_dr = self.heat_exchangers_9(p_1_dr, T_7VIII_dr)
+
+        p_2_dr = p_3_dr/self.k_heat
+        h_2_dr = h_1_dr + 0.001*(p_2_dr - p_1_dr)/self.eta_pump
+        T_2_dr = CP.PropsSI('T','P',p_2_dr,'H',h_2_dr,'Water')
+        s_2_dr = CP.PropsSI('S','P',p_2_dr,'H',h_2_dr,'Water')  
+        x_2_dr = CP.PropsSI('Q','P',p_2_dr,'H',h_2_dr,'Water')
+        e_2_dr = (h_2_dr - self.h_ref) - self.T_ref*(s_2_dr - self.s_ref)
+
+        A11_dr = h_6I_dr - h_7I_dr - h_9I_dr + h_8_dr
+        A12_dr = h_7II_dr - h_7I_dr - h_9I_dr + h_8_dr
+        A13_dr = h_7II_dr - h_7I_dr - h_9I_dr + h_8_dr
+        A21_dr = h_9I_dr - h_9II_dr         
+        A22_dr = h_6II_dr - h_7II_dr - h_9II_dr + h_9I_dr
+        A23_dr = h_7III_dr - h_7II_dr - h_9II_dr + h_9I_dr
+        A31_dr = h_9II_dr - h_9III_dr
+        A32_dr = h_9II_dr - h_9III_dr
+        A33_dr = h_6III_dr - h_7III_dr - h_9III_dr + h_9II_dr
+        B1_dr = h_9I_dr - h_8_dr
+        B2_dr = h_9II_dr - h_9I_dr
+        B3_dr = h_9III_dr - h_9II_dr
+        A_dr = np.array([[A11_dr, A12_dr, A13_dr],
+                        [A21_dr, A22_dr, A23_dr], 
+                        [A31_dr, A32_dr, A33_dr]])
+        B_dr = np.array([B1_dr, B2_dr, B3_dr])
+        X_dr = np.linalg.solve(A_dr, B_dr)
+        X_6I_dr = X_dr[0]   
+        X_6II_dr = X_dr[1]
+        X_6III_dr= X_dr[2]
+
+
+        C11_dr = h_6IV_dr - h_7IV_dr
+        C12_dr = h_7V_dr - h_7IV_dr
+        C13_dr = h_7V_dr - h_7IV_dr
+        C14_dr = h_7V_dr - h_7IV_dr 
+        C15_dr = h_7V_dr - h_7IV_dr
+        C21_dr = h_9IV_dr - h_9V_dr
+        C22_dr = h_6V_dr - h_7V_dr - h_9V_dr + h_9IV_dr
+        C23_dr = h_7VI_dr - h_7V_dr - h_9V_dr + h_9IV_dr
+        C24_dr = h_7VI_dr - h_7V_dr - h_9V_dr + h_9IV_dr
+        C25_dr = h_7VI_dr - h_7V_dr - h_9V_dr + h_9IV_dr
+        C31_dr = h_9V_dr - h_9VI_dr
+        C32_dr = h_9V_dr - h_9VI_dr
+        C33_dr = h_6VI_dr - h_7VI_dr - h_9VI_dr + h_9V_dr
+        C34_dr = h_7VII_dr - h_7VI_dr - h_9VI_dr + h_9V_dr
+        C35_dr = h_7VII_dr - h_7VI_dr - h_9VI_dr + h_9V_dr
+        C41_dr = h_9VI_dr - h_9VII_dr   
+        C42_dr = h_9VI_dr - h_9VII_dr
+        C43_dr = h_9VI_dr - h_9VII_dr
+        C44_dr = h_6VII_dr - h_7VII_dr - h_9VII_dr + h_9VI_dr
+        C45_dr = h_7VIII_dr - h_7VII_dr - h_9VII_dr + h_9VI_dr
+        C51_dr = h_9VII_dr - h_9VIII_dr
+        C52_dr = h_9VII_dr - h_9VIII_dr
+        C53_dr = h_9VII_dr - h_9VIII_dr
+        C54_dr = h_9VII_dr - h_9VIII_dr
+        C55_dr = h_6VIII_dr - h_7VIII_dr - h_9VIII_dr + h_9VII_dr
+        D1_dr = (1 + X_6I_dr + X_6II_dr + X_6III_dr) * (h_7IV_dr - h_9III_dr)
+        D2_dr = (1 + X_6I_dr + X_6II_dr + X_6III_dr) * (h_9V_dr - h_9IV_dr)
+        D3_dr = (1 + X_6I_dr + X_6II_dr + X_6III_dr) * (h_9VI_dr - h_9V_dr)
+        D4_dr = (1 + X_6I_dr + X_6II_dr + X_6III_dr) * (h_9VII_dr - h_9VI_dr)
+        D5_dr = (1 + X_6I_dr + X_6II_dr + X_6III_dr) * (h_9VIII_dr - h_9VII_dr)
+        C_dr = np.array([[C11_dr, C12_dr, C13_dr, C14_dr, C15_dr],
+                        [C21_dr, C22_dr, C23_dr, C24_dr, C25_dr],
+                        [C31_dr, C32_dr, C33_dr, C34_dr, C35_dr],
+                        [C41_dr, C42_dr, C43_dr, C44_dr, C45_dr],
+                        [C51_dr, C52_dr, C53_dr, C54_dr, C55_dr]])
+        D_dr = np.array([D1_dr, D2_dr, D3_dr, D4_dr, D5_dr])
+        Y_dr = np.linalg.solve(C_dr, D_dr)
+        X_6IV_dr = Y_dr[0]
+        X_6V_dr = Y_dr[1]
+        X_6VI_dr = Y_dr[2]
+        X_6VII_dr = Y_dr[3]
+        X_6VIII_dr = Y_dr[4]    
+
+        
+
+
+        return 
+
 
     def evaluate(self):
         """
