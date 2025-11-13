@@ -158,7 +158,7 @@ class steam_turbine(object):
         plt.show()
         return fig2
     
-    def plot_6s(self, p0, p1, s0, h0, eta):
+    def plot_6s_hs(self, p0, p1, s0, h0, eta):
         ps = np.linspace(p0, p1, 100)
         hs = []
         for p in ps:
@@ -167,7 +167,7 @@ class steam_turbine(object):
         ss = [CP.PropsSI('S','P',p,'H',h,'Water') for p, h in zip(ps, hs)]
         plt.plot(ss, hs, 'r--')
 
-    def plot_9s(self, s0, s1, p0):
+    def plot_9s_hs(self, s0, s1, p0):
         ss = np.linspace(s0, s1, 100)
         hh = [CP.PropsSI('H','P',p0,'S',s8,'Water') for s8 in ss]
         plt.plot(ss, hh, 'r--')
@@ -239,15 +239,15 @@ class steam_turbine(object):
         plt.plot(s4s5, h4h5, 'r--')
 
 
-        self.plot_6s(self.p_5, self.p_6VII, self.s_5, self.h_5, self.eta_is_LP)
-        self.plot_6s(self.p_6VII, self.p_6VI, self.s_6VII, self.h_6VII, self.eta_is_LP)
-        self.plot_6s(self.p_6VI, self.p_6V, self.s_6VI, self.h_6VI, self.eta_is_LP)
-        self.plot_6s(self.p_6V, self.p_6IV, self.s_6V, self.h_6V, self.eta_is_LP)
-        self.plot_6s(self.p_6IV, self.p_6III, self.s_6IV, self.h_6IV, self.eta_is_LP)
-        self.plot_6s(self.p_6III, self.p_6II, self.s_6III, self.h_6III, self.eta_is_LP)
-        self.plot_6s(self.p_6II, self.p_6I, self.s_6II, self.h_6II, self.eta_is_LP)
-        self.plot_6s(self.p_6I, self.p_6, self.s_6I, self.h_6I, self.eta_is_LP)
-        self.plot_6s(self.p_5, self.p_6, self.s_5, self.h_5, self.eta_is_LP) ## Pourquoi ce n'est pas pareil que la somme des autres segments ?
+        self.plot_6s_hs(self.p_5, self.p_6VII, self.s_5, self.h_5, self.eta_is_LP)
+        self.plot_6s_hs(self.p_6VII, self.p_6VI, self.s_6VII, self.h_6VII, self.eta_is_LP)
+        self.plot_6s_hs(self.p_6VI, self.p_6V, self.s_6VI, self.h_6VI, self.eta_is_LP)
+        self.plot_6s_hs(self.p_6V, self.p_6IV, self.s_6V, self.h_6V, self.eta_is_LP)
+        self.plot_6s_hs(self.p_6IV, self.p_6III, self.s_6IV, self.h_6IV, self.eta_is_LP)
+        self.plot_6s_hs(self.p_6III, self.p_6II, self.s_6III, self.h_6III, self.eta_is_LP)
+        self.plot_6s_hs(self.p_6II, self.p_6I, self.s_6II, self.h_6II, self.eta_is_LP)
+        self.plot_6s_hs(self.p_6I, self.p_6, self.s_6I, self.h_6I, self.eta_is_LP)
+        self.plot_6s_hs(self.p_5, self.p_6, self.s_5, self.h_5, self.eta_is_LP) ## Pourquoi ce n'est pas pareil que la somme des autres segments ?
 
 
 
@@ -265,15 +265,16 @@ class steam_turbine(object):
         plt.plot(s8s90, h8h90, 'r--')
 
 
-        self.plot_9s(self.s_8, self.s_90, self.p_8)
-        self.plot_9s(self.s_90, self.s_9I, self.p_90)
-        self.plot_9s(self.s_9I, self.s_9II, self.p_9I)
-        self.plot_9s(self.s_9II, self.s_9III, self.p_9II)
-        self.plot_9s(self.s_9III, self.s_9IV, self.p_9III)
-        self.plot_9s(self.s_9IV, self.s_9V, self.p_9IV)
-        self.plot_9s(self.s_9V, self.s_9VI, self.p_9V)
-        self.plot_9s(self.s_9VI, self.s_9VII, self.p_9VI)
-        self.plot_9s(self.s_9VII, self.s_9VIII, self.p_9VII)
+        self.plot_9s_hs(self.s_8, self.s_90, self.p_8)
+        self.plot_9s_hs(self.s_90, self.s_9I, self.p_90)
+        self.plot_9s_hs(self.s_9I, self.s_9II, self.p_9I)
+        self.plot_9s_hs(self.s_9II, self.s_9III, self.p_9II)
+        self.plot_9s_hs(self.s_9III, self.s_9IV, self.p_9III)
+        self.plot_9s_hs(self.s_9IV, self.s_9V, self.p_9IV)
+        self.plot_9s_hs(self.s_9V, self.s_9VI, self.p_9V)
+        self.plot_9s_hs(self.s_9VI, self.s_9VII, self.p_9VI)
+        self.plot_9s_hs(self.s_9VII, self.s_9VIII, self.p_9VII)
+        self.plot_9s_hs(self.s_9VIII, self.s_1, self.p_9VIII)
 
         ###
 
@@ -285,7 +286,121 @@ class steam_turbine(object):
         plt.show()
         return
     
+    def plot_6s_Ts(self, p0, p1, s0, h0, eta):
+        ps = np.linspace(p0, p1, 100)
+        hs = []
+        for p in ps:
+            h_is = CP.PropsSI('H','P',p,'S',s0,'Water')
+            hs.append(h0 - eta*(h0 - h_is))
+        ss = [CP.PropsSI('S','P',p,'H',h,'Water') for p, h in zip(ps, hs)]
+        Ts = [CP.PropsSI('T','P',p,'H',h,'Water') for p, h in zip(ps, hs)]
+        plt.plot(ss, Ts, 'r--')
+
+    def plot_9s_Ts(self, s0, s1, p0):
+        ss = np.linspace(s0, s1, 100)
+        Ts = [CP.PropsSI('T','P',p0,'S',s8,'Water') for s8 in ss]
+        plt.plot(ss, Ts, 'r--')
+    
     def fig_Ts(self):
+        plt.figure(figsize=(10,8))
+
+        Ts = [self.T_1, self.T_2, self.T_3, self.T_4, self.T_5, self.T_6, self.T_7, self.T_8]
+        ss = [self.s_1, self.s_2, self.s_3, self.s_4, self.s_5, self.s_6, self.s_7, self.s_8]
+
+        T6s = [self.T_6I, self.T_6II, self.T_6III, self.T_6IV, self.T_6V, self.T_6VI, self.T_6VII, self.T_6VIII]
+        s6s = [self.s_6I, self.s_6II, self.s_6III, self.s_6IV, self.s_6V, self.s_6VI, self.s_6VII, self.s_6VIII]
+
+        T7s = [self.T_7I, self.T_7II, self.T_7III, self.T_7IV, self.T_7V, self.T_7VI, self.T_7VII, self.T_7VIII]
+        s7s = [self.s_7I, self.s_7II, self.s_7III, self.s_7IV, self.s_7V, self.s_7VI, self.s_7VII, self.s_7VIII]
+
+        T9s = [self.T_90, self.T_9I, self.T_9II, self.T_9III, self.T_9IV, self.T_9V, self.T_9VI, self.T_9VII, self.T_9VIII]
+        s9s = [self.s_90, self.s_9I, self.s_9II, self.s_9III, self.s_9IV, self.s_9V, self.s_9VI, self.s_9VII, self.s_9VIII]
+
+        ### Cloche
+        fluid = 'Water'
+        T = np.linspace(CP.PropsSI('T_triple', fluid), CP.PropsSI('T_critical', fluid), 500)
+        s_l = [CP.PropsSI('S', 'T', Ti, 'Q', 0, fluid) for Ti in T]
+        s_v = [CP.PropsSI('S', 'T', Ti, 'Q', 1, fluid) for Ti in T]
+        plt.plot(s_l, T, 'b-')
+        plt.plot(s_v, T, 'b-')
+        ###
+
+        # intermediate states
+        s2s3 = np.linspace(self.s_2, self.s_3, 100)
+        T2T3 = []
+        p = self.p_2
+        k = pow(self.k_heat, 1/100)
+        for i in range(len(s2s3)):
+            T2T3.append(CP.PropsSI('T','P',p,'S',s2s3[i], 'Water'))
+            p = p * k
+        plt.plot(s2s3, T2T3, 'r--')
+
+        h3h4 = []
+        p3p4 = np.linspace(self.p_3, self.p_4, 100)
+        for p in p3p4:
+            h_is = CP.PropsSI('H','P',p,'S',self.s_3,'Water')
+            h3h4.append(self.h_3 - self.eta_is_HP*(self.h_3 - h_is))
+        s3s4 = [CP.PropsSI('S','P',p,'H',h,'Water') for p, h in zip(p3p4, h3h4)]
+        T3T4 = [CP.PropsSI('T','P',p,'H',h,'Water') for p, h in zip(p3p4, h3h4)]
+        plt.plot(s3s4, T3T4, 'r--')
+
+        s4s5 = np.linspace(self.s_4, self.s_5, 100)
+        t4t5 = []
+        p = self.p_4
+        k = pow(self.k_heat, 1/100)
+        for i in range(len(s4s5)):
+            t4t5.append(CP.PropsSI('T','P',p,'S',s4s5[i], 'Water'))
+            p = p * k
+        plt.plot(s4s5, t4t5, 'r--')
+
+        self.plot_6s_Ts(self.p_5, self.p_6VII, self.s_5, self.h_5, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_6VII, self.p_6VI, self.s_6VII, self.h_6VII, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_6VI, self.p_6V, self.s_6VI, self.h_6VI, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_6V, self.p_6IV, self.s_6V, self.h_6V, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_6IV, self.p_6III, self.s_6IV, self.h_6IV, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_6III, self.p_6II, self.s_6III, self.h_6III, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_6II, self.p_6I, self.s_6II, self.h_6II, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_6I, self.p_6, self.s_6I, self.h_6I, self.eta_is_LP)
+        self.plot_6s_Ts(self.p_5, self.p_6, self.s_5, self.h_5, self.eta_is_LP) ## Pourquoi ce n'est pas pareil que la somme des autres segments ?
+
+        s6s7 = np.linspace(self.s_6, self.s_7, 100)
+        t6t7 = [CP.PropsSI('T','P',self.p_6,'S',s6,'Water') for s6 in s6s7]
+        plt.plot(s6s7, t6t7, 'r--')
+
+        s7s8 = np.linspace(self.s_7, self.s_8, 100)
+        t7t8 = []
+        p = self.p_7
+        for i in range(len(s7s8)):
+            t7t8.append(CP.PropsSI('T','P',p,'S',s7s8[i], 'Water'))
+            p = p + (self.p_8 - self.p_7)/100
+        plt.plot(s7s8, t7t8, 'r--')
+
+        self.plot_9s_Ts(self.s_8, self.s_90, self.p_8)
+        self.plot_9s_Ts(self.s_90, self.s_9I, self.p_90)
+        self.plot_9s_Ts(self.s_9I, self.s_9II, self.p_9I)
+        self.plot_9s_Ts(self.s_9II, self.s_9III, self.p_9II)
+        self.plot_9s_Ts(self.s_9III, self.s_9IV, self.p_9III)
+        self.plot_9s_Ts(self.s_9IV, self.s_9V, self.p_9IV)
+        self.plot_9s_Ts(self.s_9V, self.s_9VI, self.p_9V)
+        self.plot_9s_Ts(self.s_9VI, self.s_9VII, self.p_9VI)
+        self.plot_9s_Ts(self.s_9VII, self.s_9VIII, self.p_9VII)
+        self.plot_9s_Ts(self.s_9VIII, self.s_1, self.p_9VIII)
+
+        # Cycle
+        plt.scatter(ss, Ts, marker='o', label='States')
+        plt.scatter(s6s, T6s, marker='o', label='6s')
+        plt.scatter(s7s, T7s, marker='o', label='7s')
+        plt.scatter(s9s, T9s, marker='o', label='9s')
+        ###
+
+
+
+        plt.title('T-s diagram of the Steam Turbine cycle')
+        plt.xlabel('Entropy [J/kg/K]')
+        plt.ylabel('Temperature [K]')
+        plt.legend()
+        plt.grid()
+        plt.show()
         return
 
 
@@ -691,7 +806,7 @@ class steam_turbine(object):
 
         # Energy and Exergy pie charts ----------------------------------------
         # if self.display: self.FIG = self.fig_pie_en(),self.fig_pie_ex(), self.fig_Ts(), self.fig_hs()
-        if self.display: self.FIG = self.fig_Ts(), self.fig_hs()
+        if self.display: self.FIG = self.fig_Ts()
         #      o fig_pie_en: pie chart of energy losses
         #      o fig_pie_ex: pie chart of exergy losses
         #      o fig_Ts_diagram: T-s diagram of the ST cycle
