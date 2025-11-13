@@ -14,8 +14,10 @@ Test code for your function
 
 import os
 import sys
+import numpy as np
 HW1 = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HW1,'corrections'))
+import matplotlib.pyplot as plt
 
 from steam_turbine_group_09 import steam_turbine
 
@@ -59,5 +61,6 @@ params =  {'p_1':          p_1,
 
 my_ST = steam_turbine(inputs,params,True)
 my_ST.evaluate()
+my_ST.print_results()
 
 eta_en = my_ST.eta_cyclen
