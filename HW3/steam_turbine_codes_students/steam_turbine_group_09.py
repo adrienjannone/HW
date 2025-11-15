@@ -283,6 +283,7 @@ class steam_turbine(object):
         plt.ylabel('Enthalpy [J/kg]')
         plt.legend()
         plt.grid()
+        plt.savefig('hs_diagram.svg', dpi=300)
         plt.show()
         return
     
@@ -440,20 +441,22 @@ class steam_turbine(object):
         self.x_4 = CP.PropsSI('Q','P',self.p_4,'H',self.h_4,'Water')    # [-] vapor quality at state 4
         self.e_4 = (self.h_4 - self.h_ref) - self.T_ref*(self.s_4 - self.s_ref) # [J/kg] exergy at state 4
 
-        self.T_6 = self.T_cd_out + self.T_pinch_cd
-        self.T_7  = self.T_6 - self.T_cd_subcool
 
-        self.x_7  = 0
-        self.p_7  = CP.PropsSI('P','T',self.T_7,'Q',self.x_7,'Water')    # [Pa] pressure at state 7
-        self.h_7  = CP.PropsSI('H','P',self.p_7,'Q',self.x_7,'Water')    # [J/kg] enthalpy at state 7
-        self.s_7  = CP.PropsSI('S','P',self.p_7,'Q',self.x_7,'Water')    # [J/kg/K] entropy at state 7
-        self.e_7  = (self.h_7 - self.h_ref) - self.T_ref*(self.s_7 - self.s_ref) # [J/kg] exergy at state 7
+        # Condenser
+        self.T_7 = self.T_cd_out
+        self.p_7 = CP.PropsSI('P','T',self.T_7,'Q',0,'Water')            # [Pa] pressure at state 7
+        self.h_7 = CP.PropsSI('H','P',self.p_7,'T',self.T_7,'Water')    # [J/kg] enthalpy at state 7
+        self.s_7 = CP.PropsSI('S','P',self.p_7,'T',self.T_7,'Water')    # [J/kg/K] entropy at state 7
+        self.x_7 = CP.PropsSI('Q','P',self.p_7,'T',self.T_7,'Water')    # [-] vapor quality at state 7
+        self.e_7 = (self.h_7 - self.h_ref) - self.T_ref*(self.s_7 - self.s_ref) # [J/kg] exergy at state 7
 
-        h6s = CP.PropsSI('H','T',self.T_6,'S',self.s_5,'Water')         # [J/kg] isentropic enthalpy at state 6
+        Tsat = self.T_7 + self.T_cd_subcool
+        self.p_6 = CP.PropsSI('P','T',Tsat,'Q',0,'Water')            # [Pa] pressure at state 6
+        h6s = CP.PropsSI('H','P',self.p_6,'S',self.s_5,'Water')         # [J/kg] isentropic enthalpy at state 6
         self.h_6 = self.h_5 - self.eta_is_LP*(self.h_5 - h6s)           # [J/kg] enthalpy at state 6
-        self.p_6 = CP.PropsSI('P','T',self.T_6,'S',self.s_5,'Water')            # [Pa] pressure at state 6
-        self.s_6 = CP.PropsSI('S','H',self.h_6,'P',self.p_6,'Water')            # [J/kg/K] entropy at state 6
-        self.x_6 = CP.PropsSI('Q','H',self.h_6,'P',self.p_6,'Water')            # [-] vapor quality at state 6
+        self.T_6 = CP.PropsSI('T','P',self.p_6,'H',self.h_6,'Water')    # [K] temperature at state 6
+        self.s_6 = CP.PropsSI('S','P',self.p_6,'H',self.h_6,'Water')    # [J/kg/K] entropy at state 6
+        self.x_6 = CP.PropsSI('Q','P',self.p_6,'H',self.h_6,'Water')    # [-] vapor quality at state 6
         self.e_6 = (self.h_6 - self.h_ref) - self.T_ref*(self.s_6 - self.s_ref) # [J/kg] exergy at state 6
 
         #6_VIII = same than 4
@@ -806,7 +809,7 @@ class steam_turbine(object):
 
         # Energy and Exergy pie charts ----------------------------------------
         # if self.display: self.FIG = self.fig_pie_en(),self.fig_pie_ex(), self.fig_Ts(), self.fig_hs()
-        if self.display: self.FIG = self.fig_Ts()
+        if self.display: self.FIG = self.fig_Ts(), self.fig_hs()
         #      o fig_pie_en: pie chart of energy losses
         #      o fig_pie_ex: pie chart of exergy losses
         #      o fig_Ts_diagram: T-s diagram of the ST cycle
