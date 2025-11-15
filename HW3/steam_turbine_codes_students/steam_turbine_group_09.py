@@ -593,7 +593,7 @@ class steam_turbine(object):
         x_3_dr = CP.PropsSI('Q','P',p_3_dr,'T',T_3_dr,'Water')  
         e_3_dr = (h_3_dr - self.h_ref) - self.T_ref*(s_3_dr - self.s_ref)   
 
-        p_4_dr = (100e5)/self.k_heat
+        p_4_dr = (80e5)/self.k_heat
         h_4_drs = CP.PropsSI('H','P',p_4_dr,'S',s_3_dr,'Water')   
         h_4_dr = h_3_dr - self.eta_is_HP*(h_3_dr - h_4_drs)
         T_4_dr = CP.PropsSI('T','P',p_4_dr,'H',h_4_dr,'Water')
@@ -601,7 +601,7 @@ class steam_turbine(object):
         x_4_dr = CP.PropsSI('Q','P',p_4_dr,'H',h_4_dr,'Water')
         e_4_dr = (h_4_dr - self.h_ref) - self.T_ref*(s_4_dr - self.s_ref)
 
-        p_5_dr = 100e5
+        p_5_dr = 80e5
         T_5_dr = self.T_max
         h_5_dr = CP.PropsSI('H','P',p_5_dr,'T',T_5_dr,'Water')
         s_5_dr = CP.PropsSI('S','P',p_5_dr,'T',T_5_dr,'Water')
