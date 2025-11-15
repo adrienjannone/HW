@@ -149,7 +149,7 @@ class steam_turbine(object):
         return fig1
     
     def fig_pie_ex(self):
-        labels = 'Mechanical losses', 'Pumps and turbines losses', 'Condenser losses', 'Transex losses'
+        labels = 'Mechanical losses', 'Pumps and turbines losses', 'Condenser losses', 'Transex losses (heat exchangers)'
         sizes = [self.loss_mec, self.loss_rotex, self.loss_condex, self.loss_transex]
         fig2, ax2 = plt.subplots()
         ax2.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
@@ -401,6 +401,186 @@ class steam_turbine(object):
         plt.legend()
         plt.grid()
         plt.show()
+        return
+    
+    def without_reheating(self):
+        p_1_wr = self.p_1
+
+        p_3_wr = self.p_5
+        T_3_wr = self.T_max
+        h_3_wr = CP.PropsSI('H','P',p_3_wr,'T',T_3_wr,'Water')    
+        s_3_wr = CP.PropsSI('S','P',p_3_wr,'T',T_3_wr,'Water')
+        x_3_wr = CP.PropsSI('Q','P',p_3_wr,'T',T_3_wr,'Water')
+        e_3_wr = (h_3_wr - self.h_ref) - self.T_ref*(s_3_wr - self.s_ref)
+
+        p_6_wr, T_6_wr, x_6_wr, h_6_wr, s_6_wr, e_6_wr = self.p_6, self.T_6, self.x_6, self.h_6, self.s_6, self.e_6
+        p_7_wr, T_7_wr, x_7_wr, h_7_wr, s_7_wr, e_7_wr = self.p_7, self.T_7, self.x_7, self.h_7, self.s_7, self.e_7 
+        p_8_wr, T_8_wr, x_8_wr, h_8_wr, s_8_wr, e_8_wr = self.p_8, self.T_8, self.x_8, self.h_8, self.s_8, self.e_8
+
+
+
+        dh_IP_LP = h_3_wr - h_6_wr
+        dh_bleed = dh_IP_LP / 9 #9 bleedings
+
+        h_6VIII_wr = h_3_wr - dh_bleed 
+        h_6VII_wr = h_6VIII_wr - dh_bleed
+        h_6VI_wr = h_6VII_wr - dh_bleed
+        h_6V_wr = h_6VI_wr - dh_bleed
+        h_6IV_wr = h_6V_wr - dh_bleed   
+        h_6III_wr = h_6IV_wr - dh_bleed
+        h_6II_wr = h_6III_wr - dh_bleed
+        h_6I_wr = h_6II_wr - dh_bleed
+
+        T_6VIII_wr, p_6VIII_wr, x_6VIII_wr, s_6VIII_wr, e_6VIII_wr = self.pressure_bleedings(h_6VIII_wr, h_3_wr, s_3_wr)
+        T_6VII_wr, p_6VII_wr, x_6VII_wr, s_6VII_wr, e_6VII_wr = self.pressure_bleedings(h_6VII_wr, h_6VIII_wr, s_6VIII_wr)
+        T_6VI_wr, p_6VI_wr, x_6VI_wr, s_6VI_wr, e_6VI_wr = self.pressure_bleedings(h_6VI_wr, h_6VII_wr, s_6VII_wr)
+        T_6V_wr, p_6V_wr, x_6V_wr, s_6V_wr, e_6V_wr = self.pressure_bleedings(h_6V_wr, h_6VI_wr, s_6VI_wr)
+        T_6IV_wr, p_6IV_wr, x_6IV_wr, s_6IV_wr, e_6IV_wr = self.pressure_bleedings(h_6IV_wr, h_6V_wr, s_6V_wr)
+        T_6III_wr, p_6III_wr, x_6III_wr, s_6III_wr, e_6III_wr = self.pressure_bleedings(h_6III_wr, h_6IV_wr, s_6IV_wr)
+        T_6II_wr, p_6II_wr, x_6II_wr, s_6II_wr, e_6II_wr = self.pressure_bleedings(h_6II_wr, h_6III_wr, s_6III_wr)
+        T_6I_wr, p_6I_wr, x_6I_wr, s_6I_wr, e_6I_wr = self.pressure_bleedings(h_6I_wr, h_6II_wr, s_6II_wr)
+
+        p_7I_wr = p_6I_wr
+        p_7II_wr = p_6II_wr
+        p_7III_wr = p_6III_wr
+        p_7V_wr = p_6V_wr
+        p_7VI_wr = p_6VI_wr
+        p_7VII_wr = p_6VII_wr
+        p_7VIII_wr = p_6VIII_wr
+
+        T_7I_wr, x_7I_wr, h_7I_wr, s_7I_wr, e_7I_wr = self.saturated_liquid_7(p_6I_wr)
+        T_7II_wr, x_7II_wr, h_7II_wr, s_7II_wr, e_7II_wr = self.saturated_liquid_7(p_6II_wr)
+        T_7III_wr, x_7III_wr, h_7III_wr, s_7III_wr, e_7III_wr = self.saturated_liquid_7(p_6III_wr)
+        p_7IV_wr, T_7IV_wr, x_7IV_wr, h_7IV_wr, s_7IV_wr, e_7IV_wr = self.p_7IV, self.T_7IV, self.x_7IV, self.h_7IV, self.s_7IV, self.e_7IV
+        T_7V_wr, x_7V_wr, h_7V_wr, s_7V_wr, e_7V_wr = self.saturated_liquid_7(p_6V_wr)
+        T_7VI_wr, x_7VI_wr, h_7VI_wr, s_7VI_wr, e_7VI_wr = self.saturated_liquid_7(p_6VI_wr)  
+        T_7VII_wr, x_7VII_wr, h_7VII_wr, s_7VII_wr, e_7VII_wr = self.saturated_liquid_7(p_6VII_wr)
+        T_7VIII_wr, x_7VIII_wr, h_7VIII_wr, s_7VIII_wr, e_7VIII_wr = self.saturated_liquid_7(p_6VIII_wr)
+
+        p_90_wr = p_8_wr
+        p_9I_wr = p_8_wr
+        p_9II_wr = p_8_wr
+        p_9III_wr = p_8_wr
+        p_7IV_wr = p_8_wr
+        
+        p_9IV_wr = p_1_wr
+        p_9V_wr = p_1_wr
+        p_9VI_wr = p_1_wr
+        p_9VII_wr = p_1_wr
+        p_9VIII_wr = p_1_wr
+
+        p_9IV_wr, T_9IV_wr, x_9IV_wr, h_9IV_wr, s_9IV_wr, e_9IV_wr = self.p_9IV, self.T_9IV, self.x_9IV, self.h_9IV, self.s_9IV, self.e_9IV
+        T_9I_wr, x_9I_wr, h_9I_wr, s_9I_wr, e_9I_wr = self.heat_exchangers_9(p_9IV_wr, T_7I_wr)
+        T_9II_wr, x_9II_wr, h_9II_wr, s_9II_wr, e_9II_wr = self.heat_exchangers_9(p_9IV_wr, T_7II_wr)
+        T_9III_wr, x_9III_wr, h_9III_wr, s_9III_wr, e_9III_wr = self.heat_exchangers_9(p_9IV_wr, T_7III_wr)
+        T_9V_wr, x_9V_wr, h_9V_wr, s_9V_wr, e_9V_wr = self.heat_exchangers_9(p_9IV_wr, T_7V_wr)
+        T_9VI_wr, x_9VI_wr, h_9VI_wr, s_9VI_wr, e_9VI_wr = self.heat_exchangers_9(p_9IV_wr, T_7VI_wr)
+        T_9VII_wr, x_9VII_wr, h_9VII_wr, s_9VII_wr, e_9VII_wr = self.heat_exchangers_9(p_9IV_wr, T_7VII_wr)
+        T_9VIII_wr, x_9VIII_wr, h_9VIII_wr, s_9VIII_wr, e_9VIII_wr = self.heat_exchangers_9(p_9IV_wr, T_7VIII_wr)
+        T_90_wr, x_90_wr, h_90_wr, s_90_wr, e_90_wr = self.heat_exchangers_9(p_90_wr, T_8_wr)
+        T_1_wr, x_1_wr, h_1_wr, s_1_wr, e_1_wr = self.heat_exchangers_9(p_1_wr, T_7VIII_wr)
+
+
+        p_2_wr = p_3_wr/self.k_heat
+        h_2_wr = h_1_wr + 0.001*(p_2_wr - p_1_wr)/self.eta_pump
+        T_2_wr = CP.PropsSI('T','P',p_2_wr,'H',h_2_wr,'Water')
+        s_2_wr = CP.PropsSI('S','P',p_2_wr,'H',h_2_wr,'Water')
+        x_2_wr = CP.PropsSI('Q','P',p_2_wr,'H',h_2_wr,'Water')
+        e_2_wr = (h_2_wr - self.h_ref) - self.T_ref*(s_2_wr - self.s_ref)
+
+        A11_wr = h_6I_wr - h_7I_wr - h_9I_wr + h_8_wr
+        A12_wr = h_7II_wr - h_7I_wr - h_9I_wr + h_8_wr
+        A13_wr = h_7II_wr - h_7I_wr - h_9I_wr + h_8_wr
+        A21_wr = h_9I_wr - h_9II_wr
+        A22_wr = h_6II_wr - h_7II_wr - h_9II_wr + h_9I_wr
+        A23_wr = h_7III_wr - h_7II_wr - h_9II_wr + h_9I_wr
+        A31_wr = h_9II_wr - h_9III_wr
+        A32_wr = h_9II_wr - h_9III_wr
+        A33_wr = h_6III_wr - h_7III_wr - h_9III_wr + h_9II_wr
+        B1_wr = h_9I_wr - h_8_wr
+        B2_wr = h_9II_wr - h_9I_wr
+        B3_wr = h_9III_wr - h_9II_wr
+
+        A = np.array([[A11_wr, A12_wr, A13_wr],
+              [A21_wr, A22_wr, A23_wr], 
+              [A31_wr, A32_wr, A33_wr]])
+        
+        B = np.array([B1_wr, B2_wr, B3_wr])
+        X = np.linalg.solve(A, B)
+        X_6I_wr = X[0]
+        X_6II_wr = X[1]
+        X_6III_wr= X[2]
+
+        C11_wr = h_6IV_wr - h_7IV_wr
+        C12_wr = h_7V_wr - h_7IV_wr
+        C13_wr = h_7V_wr - h_7IV_wr
+        C14_wr = h_7V_wr - h_7IV_wr
+        C15_wr = h_7V_wr - h_7IV_wr
+        C21_wr = h_9IV_wr - h_9V_wr
+        C22_wr = h_6V_wr - h_7V_wr - h_9V_wr + h_9IV_wr
+        C23_wr = h_7VI_wr - h_7V_wr - h_9V_wr + h_9IV_wr
+        C24_wr = h_7VI_wr - h_7V_wr - h_9V_wr + h_9IV_wr
+        C25_wr = h_7VI_wr - h_7V_wr - h_9V_wr + h_9IV_wr
+        C31_wr = h_9V_wr - h_9VI_wr
+        C32_wr = h_9V_wr - h_9VI_wr
+        C33_wr = h_6VI_wr - h_7VI_wr - h_9VI_wr + h_9V_wr
+        C34_wr = h_7VII_wr - h_7VI_wr - h_9VI_wr + h_9V_wr
+        C35_wr = h_7VII_wr - h_7VI_wr - h_9VI_wr + h_9V_wr
+        C41_wr = h_9VI_wr - h_9VII_wr
+        C42_wr = h_9VI_wr - h_9VII_wr
+        C43_wr = h_9VI_wr - h_9VII_wr
+        C44_wr = h_6VII_wr - h_7VII_wr - h_9VII_wr + h_9VI_wr
+        C45_wr = h_7VIII_wr - h_7VII_wr - h_9VII_wr + h_9VI_wr 
+        C51_wr = h_9VII_wr - h_9VIII_wr
+        C52_wr = h_9VII_wr - h_9VIII_wr
+        C53_wr = h_9VII_wr - h_9VIII_wr
+        C54_wr = h_9VII_wr - h_9VIII_wr
+        C55_wr = h_6VIII_wr - h_7VIII_wr - h_9VIII_wr + h_9VII_wr
+        D1_wr = (1 + X_6I_wr + X_6II_wr + X_6III_wr) * (h_7IV_wr - h_9III_wr)
+        D2_wr = (1 + X_6I_wr + X_6II_wr + X_6III_wr) * (h_9V_wr - h_9IV_wr)
+        D3_wr = (1 + X_6I_wr + X_6II_wr + X_6III_wr) * (h_9VI_wr - h_9V_wr) 
+        D4_wr = (1 + X_6I_wr + X_6II_wr + X_6III_wr) * (h_9VII_wr - h_9VI_wr)
+        D5_wr = (1 + X_6I_wr + X_6II_wr + X_6III_wr) * (h_9VIII_wr - h_9VII_wr) 
+
+        C_wr = np.array([[C11_wr, C12_wr, C13_wr, C14_wr, C15_wr],
+                        [C21_wr, C22_wr, C23_wr, C24_wr, C25_wr],
+                        [C31_wr, C32_wr, C33_wr, C34_wr, C35_wr],
+                        [C41_wr, C42_wr, C43_wr, C44_wr, C45_wr],
+                        [C51_wr, C52_wr, C53_wr, C54_wr, C55_wr]])
+                
+        D_wr = np.array([D1_wr, D2_wr, D3_wr, D4_wr, D5_wr])
+        Y_wr = np.linalg.solve(C_wr, D_wr)
+        X_6IV_wr = Y_wr[0]
+        X_6V_wr = Y_wr[1]
+        X_6VI_wr = Y_wr[2]
+        X_6VII_wr = Y_wr[3]
+        X_6VIII_wr = Y_wr[4]
+    
+
+        W_mov_wr = (h_6I_wr - h_6_wr) + \
+           (1 + X_6I_wr) * (h_6II_wr - h_6I_wr) + \
+           (1 + X_6I_wr + X_6II_wr) * (h_6III_wr - h_6II_wr) + \
+           (1 + X_6I_wr + X_6II_wr + X_6III_wr) * (h_6IV_wr - h_6III_wr) + \
+           (1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr) * (h_6V_wr - h_6IV_wr) + \
+           (1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr + X_6V_wr) * (h_6VI_wr - h_6V_wr) + \
+           (1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr + X_6V_wr + X_6VI_wr) * (h_6VII_wr - h_6VI_wr) + \
+           (1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr + X_6V_wr + X_6VI_wr + X_6VII_wr) * (h_6VIII_wr - h_6VII_wr) + \
+           (1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr + X_6V_wr + X_6VI_wr + X_6VII_wr + X_6VIII_wr) * (h_3_wr - h_6VIII_wr)
+
+        W_op_wr = (1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr + X_6V_wr + X_6VI_wr + X_6VII_wr + X_6VIII_wr) * (h_2_wr - h_1_wr) + \
+          (1 + X_6I_wr + X_6II_wr + X_6III_wr) * (h_8_wr - h_7_wr) + \
+          (1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr + X_6V_wr + X_6VI_wr + X_6VII_wr + X_6VIII_wr) * (h_9IV_wr - h_7IV_wr)
+        
+        W_mcy_wr = W_mov_wr - W_op_wr
+        dotm_v_wr = self.P_e / (self.eta_mec*W_mcy_wr)
+        print(dotm_v_wr)
+
+        dotm_tot_wr = dotm_v_wr*(1 + X_6I_wr + X_6II_wr + X_6III_wr + X_6IV_wr + X_6V_wr + X_6VI_wr + X_6VII_wr + X_6VIII_wr)
+
+        eta_cyclen_wr  = (W_mcy_wr*dotm_v_wr) / (dotm_tot_wr * (h_3_wr - h_2_wr))
+        eta_cyclex_wr  = ((W_mcy_wr*dotm_v_wr) ) / (dotm_tot_wr * (e_3_wr - e_2_wr)) 
+        print(eta_cyclen_wr, eta_cyclex_wr)
+
         return
 
     def double_reheating(self):
@@ -1005,8 +1185,7 @@ class steam_turbine(object):
         self.without_reheating()
         self.double_reheating()
         # Energy and Exergy pie charts ----------------------------------------
-        # if self.display: self.FIG = self.fig_pie_en(),self.fig_pie_ex(), self.fig_Ts(), self.fig_hs()
-        if self.display: self.FIG = self.fig_Ts()
+        if self.display: self.FIG = self.fig_pie_en(),self.fig_pie_ex(), self.fig_Ts(), self.fig_hs()
         #      o fig_pie_en: pie chart of energy losses
         #      o fig_pie_ex: pie chart of exergy losses
         #      o fig_Ts_diagram: T-s diagram of the ST cycle
