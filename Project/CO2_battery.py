@@ -36,34 +36,49 @@ class CO2_battery(object):
         self.eta_comp = params['eta_comp']
         self.eta_turb = params['eta_turb']
         self.eta_pump = params['eta_pump']
+        self.eta_mec = params['eta_mec']
+        self.eta_elec = params['eta_elec']
         self.fluid = params['fluid']
         self.Pe = inputs
         self.plot = plot
 
         # Outside states
-        self.p_0 = self.p_amb
-        self.T_0 = self.T_amb
-        self.h_0 = CP.PropsSI('H', 'P', self.p_0, 'T', self.T_0, self.fluid)
-        self.s_0 = CP.PropsSI('S', 'P', self.p_0, 'T', self.T_0, self.fluid)
+        self.p_ref = self.p_amb
+        self.T_ref = self.T_amb
+        self.h_ref = CP.PropsSI('H', 'P', self.p_ref, 'T', self.T_ref, self.fluid)
+        self.s_ref = CP.PropsSI('S', 'P', self.p_ref, 'T', self.T_ref, self.fluid)
 
         # Dome states
         self.p_C1 = self.p_dome
         self.T_C1 = self.T_amb
         self.h_C1 = CP.PropsSI('H', 'P', self.p_C1, 'T', self.T_C1, self.fluid)
         self.s_C1 = CP.PropsSI('S', 'P', self.p_C1, 'T', self.T_C1, self.fluid)
-        self.e_C1 = self.h_C1 - self.h_0 - self.T_0 * (self.s_C1 - self.s_0)
+        self.e_C1 = self.h_C1 - self.h_ref - self.T_ref * (self.s_C1 - self.s_ref)
+        self.x_C1 = CP.PropsSI('Q', 'P', self.p_C1, 'T', self.T_C1, self.fluid)
 
     def discharge_phase(self):
-        # Liquid CO2 storage
+        # State 1 - Liquid CO2 storage
         self.p_D1 = self.p_storage_co2_liquid
         self.T_D1 = self.T_amb
         self.h_D1 = CP.PropsSI('H', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
         self.s_D1 = CP.PropsSI('S', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
-        self.e_D1 = self.h_D1 - self.h_0 - self.T_0 * (self.s_D1 - self.s_0)
+        self.e_D1 = self.h_D1 - self.h_ref - self.T_ref * (self.s_D1 - self.s_ref)
+        self.x_D1 = CP.PropsSI('Q', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
 
-        # PCHX outlet - Dome inlet
+        # State 9 - PCHX outlet - Dome inlet
         self.p_D9 = self.p_dome / self.k_dome
-        
+
+        # State 8 - Turbine outlet
+        self.p_D8 = self.p_D9
+        self.h_8DS = CP.PropsSI('H', 'S', self.s_D7, 'P', self.p_D8, self.fluid)
+        self.h_D8 = self.h_D7 - self.eta_turb * (self.h_D7 - self.h_8DS)
+        self.T_D8 = CP.PropsSI('T', 'P', self.p_D8, 'H', self.h_D8, self.fluid)
+        self.s_D8 = CP.PropsSI('S', 'P', self.p_D8, 'H', self.h_D8, self.fluid)
+        self.e_D8 = self.h_D8 - self.h_ref - self.T_ref * (self.s_D8 - self.s_ref)
+        self.x_D8 = CP.PropsSI('Q', 'P', self.p_D8, 'T', self.T_D8, self.fluid)
+
+
+
 
 
         

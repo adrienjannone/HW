@@ -24,6 +24,8 @@ k_dome = 0.5 * 1e-2                 # Pressure drop coefficient dome (inlet, out
 eta_comp = 0.85                     # Compressor adiabatic efficiency (isentropic)
 eta_turb = 0.9                      # Turbine adiabatic efficiency (isentropic)
 eta_pump = 0.85                     # Pump adiabatic efficiency (isentropic)
+eta_mec = 0.99                      # Mechanical efficiency (shaft)
+eta_elec = 0.985                # Electrical efficiency (motor/generator)
 pinch = 2 + 273.15                  # K (jsp où tu l'as trouvé)
 p_amb = 1e5                         # Pa
 inputs = Pe
@@ -38,6 +40,8 @@ params = {
     'eta_comp': eta_comp,
     'eta_turb': eta_turb,
     'eta_pump': eta_pump,
+    'eta_mec': eta_mec,
+    'eta_elec': eta_elec,
     'fluid': 'CO2'
 }
 
