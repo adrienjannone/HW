@@ -8,31 +8,36 @@ Test code for your CO2 battery model
 @date: November 30th, 2025
 """
 
-#
-# ===IMPORT PACKAGES============================================================
 
 from CO2_battery import CO2_battery
 
+# From the slides
+p_storage_co2_liquid = 70 * 1e5     # Pa
+T_storage_water = 22 + 273.15       # K
+T_storage_TES = 450 + 273.15        # K
+Pe = 20e6                           # W
 
-p_0 = 1e+5  # Pa
-T_0 = 15 + 273.15  # K
-p_2 = 70e+5  # Pa
-T_4 = T_0
-eta_is_comp = 0.85
-eta_is_turb = 0.93
-eta_mec = 0.99
-eta_elec = 0.985
-pinch = 2  # K #pinch of single heat exchanger
+# From the Paper
+T_amb = 15 + 273.15                 # K
+p_dome = 1e5                        # Pa
+k_dome = 0.5 * 1e-2                 # Pressure drop coefficient dome (inlet, outlet)
+eta_comp = 0.85                     # Compressor adiabatic efficiency (isentropic)
+eta_turb = 0.9                      # Turbine adiabatic efficiency (isentropic)
+eta_pump = 0.85                     # Pump adiabatic efficiency (isentropic)
+pinch = 2 + 273.15                  # K (jsp où tu l'as trouvé)
+inputs = Pe
+params = {
+    'p_storage_co2_liquid': p_storage_co2_liquid,
+    'T_storage_water': T_storage_water,
+    'T_storage_TES': T_storage_TES,
+    'T_amb': T_amb,
+    'p_dome': p_dome,
+    'k_dome': k_dome,
+    'eta_comp': eta_comp,
+    'eta_turb': eta_turb,
+    'eta_pump': eta_pump
+}
 
-params = {'p_0': p_0,   
-          'T_0': T_0,
-          'p_2': p_2,
-          'eta_is_comp': eta_is_comp,
-          'eta_is_turb': eta_is_turb,
-          'eta_mec': eta_mec,
-          'eta_elec': eta_elec,
-          'pinch': pinch
-          }
 
-my_battery = CO2_battery(params, True)
-my_battery.evaluate()
+dome = CO2_battery(inputs, params, True)
+dome.evaluate()
