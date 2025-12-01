@@ -89,18 +89,11 @@ class heat_exchanger(object):
         return pinch
     
     def get_pinch_exit(self, p_evap): # Pinch à la sortie de la vapeur
-        # self.mass_ratio(p_evap)
-        # T0 = self.T_hs_su
-        # dh_hs = CP.PropsSI("H", "T", self.T_hs_su, "P", self.p_hs, self.fluid_hs) - CP.PropsSI("H", "T", self.T_hs_ex, "P", self.p_hs, self.fluid_hs)
-        # h2 = CP.PropsSI("H", "T", self.T_cs_su, "P", p_evap, self.fluid_cs)
-        # h3 = h2 + dh_hs/self.m_dot_r
-        # T3 = CP.PropsSI("T", "H", h3, "P", p_evap, self.fluid_cs)
         return self.T_hs_su - self.T_cs_ex
     
     def pinch_objective(self, p_evap):
         pinch = min(self.get_pinch_SAT(p_evap), self.get_pinch_exit(p_evap))
         return pinch - self.pinch_target
-        # return self.get_pinch_SAT(p_evap) - self.pinch_target
     
     def plot_curves(self):
         T_hs = np.linspace(self.T_hs_ex, self.T_hs_su, 100)
