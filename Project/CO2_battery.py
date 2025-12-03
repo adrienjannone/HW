@@ -13,6 +13,7 @@ import CoolProp.CoolProp as CP
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as opt
+#from scipy.optimize import fsolve
 
 """
 D1: Outlet of the liquid CO2 storage tank and inlet of the evaporator
@@ -59,11 +60,57 @@ class CO2_battery(object):
         self.s_C1 = CP.PropsSI('S', 'P', self.p_C1, 'T', self.T_C1, self.fluid)
         self.e_C1 = self.h_C1 - self.h_ref - self.T_ref * (self.s_C1 - self.s_ref)
         self.x_C1 = CP.PropsSI('Q', 'P', self.p_C1, 'T', self.T_C1, self.fluid)
+
+        #evaporator
+        self.T_D2 = 20 + 273.15
+        self.T_w_in = 25+273.15
+        self.T_w_out = 22+273.15
+        self.p_w = 1.1e5
+
+    def mass_ratio(self, p_evap):
+        h_hs_su = CP.PropsSI("H", "T", self.T_w_in, "P", self.p_w, "water")  # [J/kg] h0
+        h_hs_ex = CP.PropsSI("H", "T", self.T_w_out, "P", self.p_w, "water")  # [J/kg] h1
+
+        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid)  # [J/kg] h2
+        h_cs_ex = CP.PropsSI("H", "T", self.T_D2, "P", p_evap, self.fluid)  # [J/kg] h3
+
+        self.h_hs = (h_hs_su - h_hs_ex)  # [J/kg]  h0 - h1
+        self.h_cs = (h_cs_ex - h_cs_su)  # [J/kg] h3 - h2
+        self.m_dot_r = self.h_hs / self.h_cs # (h0 - h1)/(h3 - h2) hot/cold
+        pass
+    
+    def get_pinch_SAT(self, p_evap):
+        self.mass_ratio(p_evap)
+        T_c = CP.PropsSI("T", "P", p_evap, "Q", 0, self.fluid)  # [K] saturation temperature
+        h_c = CP.PropsSI("H", "P", p_evap, "Q", 0, self.fluid)  # [J/kg] saturated liquid enthalpy
+        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid)  # [J/kg]
+        dh = h_c - h_cs_su  # [J/kg]
+        h_hs_ex = CP.PropsSI("H", "T", self.T_w_out, "P", self.p_w, "water")  # [J/kg]
+        
+        h_h = h_hs_ex + dh*self.m_dot_r  # [J/kg]
+        T_h = CP.PropsSI("T", "H", h_h, "P", self.p_w, "water")  # [K]
+        pinch = T_h - T_c  # [K]
+        self.measured_pinch = pinch
+        return pinch
+    
+    def get_pinch_exit(self, p_evap): # Pinch à la sortie de la vapeur
+        return self.T_w_in - self.T_D2
+
+    def pinch_objective(self, p_evap):
+        pinch = min(self.get_pinch_SAT(p_evap), self.get_pinch_exit(p_evap))
+        return pinch - self.pinch_TES0
     
     def evaporator(self):
         # Counter-flow heat exchanger between CO2 and water
         # J'ai besoin de la temperature de l'eau en sortie du condensateur  
-        pass
+        #########
+        p_cs_guess = 50e5
+        self.mass_ratio(self.pinch_TES0)
+        p_evap_solution = opt.fsolve(self.pinch_TES0, p_cs_guess)[0]
+        print(p_evap_solution)
+
+        return 
+        
 
     def TES_charge(self):
         # TES pinch = 7.5 K
@@ -104,10 +151,9 @@ class CO2_battery(object):
 
 
 
-
-
         
       
     def evaluate(self):
+        self.discharge_phase()
         pass
 
