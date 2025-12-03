@@ -39,6 +39,7 @@ params = {
     'p_amb': p_amb,
     'p_dome': p_dome,
     'k_dome': k_dome,
+    'K_TES': k_TES,
     'eta_comp': eta_comp,
     'eta_turb': eta_turb,
     'eta_pump': eta_pump,
