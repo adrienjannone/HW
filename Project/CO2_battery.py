@@ -65,6 +65,8 @@ class CO2_battery(object):
         self.T_w_in = 25+273.15
         self.T_w_out = 22+273.15
         self.p_w = 1.1e5
+        self.m_dot_r = 0
+        self.measured_pinch = 0
 
     def mass_ratio(self, p_evap):
         h_hs_su = CP.PropsSI("H", "T", self.T_w_in, "P", self.p_w, "water")  # [J/kg] h0
@@ -76,7 +78,6 @@ class CO2_battery(object):
         self.h_hs = (h_hs_su - h_hs_ex)  # [J/kg]  h0 - h1
         self.h_cs = (h_cs_ex - h_cs_su)  # [J/kg] h3 - h2
         self.m_dot_r = self.h_hs / self.h_cs # (h0 - h1)/(h3 - h2) hot/cold
-        pass
     
     def get_pinch_SAT(self, p_evap):
         self.mass_ratio(p_evap)
@@ -103,9 +104,9 @@ class CO2_battery(object):
         # Counter-flow heat exchanger between CO2 and water
         # J'ai besoin de la temperature de l'eau en sortie du condensateur  
         #########
-        p_cs_guess = 50e5
-        self.mass_ratio(self.pinch_TES0)
-        p_evap_solution = opt.fsolve(self.pinch_TES0, p_cs_guess)[0]
+        p_cs_guess = 57e5
+        self.mass_ratio(p_cs_guess)
+        p_evap_solution = opt.fsolve(self.pinch_objective, p_cs_guess)[0]
         print(p_evap_solution)
 
         return 
@@ -114,11 +115,11 @@ class CO2_battery(object):
     def TES_charge(self):
         # TES pinch = 7.5 K
         self.T_D6 = self.T_storage_TES - self.pinch_TES
-        self.p_D6 = self.p_D2 * (1-self.k_TES)
-        self.h_D6 = CP.PropsSI('H', 'P', self.p_D6, 'T', self.T_D6, self.fluid)
-        self.s_D6 = CP.PropsSI('S', 'P', self.p_D6, 'T', self.T_D6, self.fluid)
-        self.e_D6 = self.h_D6 - self.h_ref - self.T_ref * (self.s_D6 - self.s_ref)
-        self.x_D6 = CP.PropsSI('Q', 'P', self.p_D6, 'T', self.T_D6, self.fluid)
+        #self.p_D6 = self.p_D2 * (1-self.k_TES)
+        #self.h_D6 = CP.PropsSI('H', 'P', self.p_D6, 'T', self.T_D6, self.fluid)
+        #self.s_D6 = CP.PropsSI('S', 'P', self.p_D6, 'T', self.T_D6, self.fluid)
+        #self.e_D6 = self.h_D6 - self.h_ref - self.T_ref * (self.s_D6 - self.s_ref)
+        #self.x_D6 = CP.PropsSI('Q', 'P', self.p_D6, 'T', self.T_D6, self.fluid)
 
 
     def discharge_phase(self):
@@ -140,16 +141,16 @@ class CO2_battery(object):
         self.p_D9 = self.p_dome *(1+self.k_dome)
 
         # State 8 - Turbine outlet
-        self.p_D8 = self.p_D9
-        self.h_8DS = CP.PropsSI('H', 'S', self.s_D6, 'P', self.p_D8, self.fluid)
-        self.h_D8 = self.h_D6 - self.eta_turb * (self.h_D6 - self.h_8DS)
-        self.T_D8 = CP.PropsSI('T', 'P', self.p_D8, 'H', self.h_D8, self.fluid)
-        self.s_D8 = CP.PropsSI('S', 'P', self.p_D8, 'H', self.h_D8, self.fluid)
-        self.e_D8 = self.h_D8 - self.h_ref - self.T_ref * (self.s_D8 - self.s_ref)
-        self.x_D8 = CP.PropsSI('Q', 'P', self.p_D8, 'T', self.T_D8, self.fluid)
+        #self.p_D8 = self.p_D9
+        #self.h_8DS = CP.PropsSI('H', 'S', self.s_D6, 'P', self.p_D8, self.fluid)
+        #self.h_D8 = self.h_D6 - self.eta_turb * (self.h_D6 - self.h_8DS)
+        #self.T_D8 = CP.PropsSI('T', 'P', self.p_D8, 'H', self.h_D8, self.fluid)
+        #self.s_D8 = CP.PropsSI('S', 'P', self.p_D8, 'H', self.h_D8, self.fluid)
+        #self.e_D8 = self.h_D8 - self.h_ref - self.T_ref * (self.s_D8 - self.s_ref)
+        #self.x_D8 = CP.PropsSI('Q', 'P', self.p_D8, 'T', self.T_D8, self.fluid)
 
         # Mass flow rate
-        self.m_dot_CO2 = self.Pe / ((self.h_D6 - self.h_D8) * self.eta_mec * self.eta_elec)
+        #self.m_dot_CO2 = self.Pe / ((self.h_D6 - self.h_D8) * self.eta_mec * self.eta_elec)
 
 
 
