@@ -20,7 +20,7 @@ Pe = 20e6                           # W
 # From the Paper
 T_amb = 15 + 273.15                 # K
 p_dome = 1e5                        # Pa
-k_dome = 0.005                # Pressure drop coefficient dome (inlet, outlet)
+k_dome = 0.005                      # Pressure drop coefficient dome (inlet, outlet)
 k_TES = 4e-2                        # Pressure drop coefficient TES (inlet, outlet)
 eta_comp = 0.85                     # Compressor adiabatic efficiency (isentropic)
 eta_turb = 0.9                      # Turbine adiabatic efficiency (isentropic)
@@ -29,6 +29,7 @@ eta_mec = 0.99                      # Mechanical efficiency (shaft)
 eta_elec = 0.985                    # Electrical efficiency (motor/generator)
 pinch_TES0 = 2                      # K
 pinch_TES = 7.5                     # K
+pinch_PCHX = 5                      # K
 p_amb = 1e5                         # Pa
 m_dot_cycle = 54                    # kg/s
 inputs = Pe
@@ -47,6 +48,7 @@ params = {
     'eta_elec': eta_elec,
     'pinch_TES0': pinch_TES0,
     'pinch_TES': pinch_TES,
+    'pinch_PCHX': pinch_PCHX,
     'fluid': 'CO2',
     'm_dot_cycle' : m_dot_cycle
 }
@@ -54,3 +56,4 @@ params = {
 
 dome = CO2_battery(inputs, params, True)
 dome.evaluate()
+dome.print_results()

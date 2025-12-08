@@ -41,6 +41,7 @@ class CO2_battery(object):
         self.eta_elec = params['eta_elec']
         self.pinch_TES0 = params['pinch_TES0']
         self.pinch_TES = params['pinch_TES']
+        self.pinch_PCHX = params['pinch_PCHX']
         self.fluid = params['fluid']
         self.m_dot_CO2 = params['m_dot_cycle']
         self.Pe = inputs
@@ -67,6 +68,9 @@ class CO2_battery(object):
         self.p_w = 1.1e5
         self.m_dot_r = 0
         self.measured_pinch = 0
+
+        # TES
+        self.T_TES_out = 25 + 273.15
 
     def mass_ratio(self, p_evap):
         h_hs_su = CP.PropsSI("H", "T", self.T_w_in, "P", self.p_w, "water")  
@@ -101,14 +105,28 @@ class CO2_battery(object):
         return pinch - self.pinch_TES0
     
     def evaporator(self):
-        self.T_D1 = self.T_D0
         p_cs_guess = 57e5 
         self.mass_ratio(p_cs_guess)
         p_evap_solution = opt.fsolve(self.pinch_objective, p_cs_guess)[0]
         self.p_D1 = p_evap_solution
-        print(p_evap_solution)
-        return 
-        
+        return
+    
+    def vaporator_efficiency(self):
+        T1_m = (self.T_w_in-self.T_storage_water)/(np.log(self.T_w_in/self.T_storage_water))
+        T2_m = (self.T_D2-self.T_D1)/(np.log(self.T_D2/self.T_D1)) 
+        self.eta_transex_TES0 = self.m_dot_r* ((T2_m - self.T_ref)/T2_m)*(T1_m/(T1_m - self.T_ref))
+
+    def TES_efficiency(self):
+        # Si TES est de l'eau (improbable)
+        self.m_dot_TES_r = (self.h_D7 - self.h_D2) / (4180*(self.T_storage_TES - self.T_TES_out)) # J'ai inversé ?
+        T1_m = (self.T_storage_TES-self.T_TES_out)/(np.log(self.T_storage_TES/self.T_TES_out))
+        T2_m = (self.T_D7-self.T_D2)/(np.log(self.T_D7/self.T_D2)) 
+        self.eta_transex_TES = self.m_dot_TES_r* ((T2_m - self.T_ref)/T2_m)*(T1_m/(T1_m - self.T_ref))
+
+    def PCHX_efficiency(self):
+        T1_m = (self.T_D8-self.T_D9)/(np.log(self.T_D8/self.T_D9))
+        T2_m = (self.T_w_in-self.T_storage_water)/(np.log(self.T_w_in/self.T_storage_water))
+        self.eta_transex = self.m_dot_r* ((T2_m - self.T_ref)/T2_m)*(T1_m/(T1_m - self.T_ref))
 
     def TES_discharge(self):
         self.T_D7 = self.T_storage_TES - self.pinch_TES
@@ -129,6 +147,7 @@ class CO2_battery(object):
         self.x_D0 = CP.PropsSI('Q', 'P', self.p_D0, 'T', self.T_D0, self.fluid)
 
         # State 1 - Evaporator inlet - TS0 inlet
+        self.T_D1 = self.T_D0
         self.evaporator()
         self.h_D1 = CP.PropsSI('H', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
         self.s_D1= CP.PropsSI('S', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
@@ -139,7 +158,7 @@ class CO2_battery(object):
         # State 2 - Evaporator outlet - TS0 outlet/TES inlet
         self.p_D2 = self.p_D1 # TSO isobaric
         self.h_D2 = CP.PropsSI('H', 'P', self.p_D2, 'T', self.T_D2, self.fluid)
-        self.s_D2= CP.PropsSI('S', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
+        self.s_D2= CP.PropsSI('S', 'P', self.p_D2, 'T', self.T_D2, self.fluid)
         self.e_D2 = self.h_D2 - self.h_ref - self.T_ref * (self.s_D2 - self.s_ref)
         self.x_D2 = CP.PropsSI('Q', 'P', self.p_D2, 'T', self.T_D2, self.fluid)
 
@@ -148,11 +167,11 @@ class CO2_battery(object):
 
         # State 9 - PCHX outlet - Dome inlet
         self.p_D9 = self.p_amb *(1+self.k_dome)
-        self.h_D9 = self.h_C1
-        self.T_D9 = CP.PropsSI('T', 'P', self.p_D9, 'H', self.h_D9, self.fluid)
-        self.s_D9 = CP.PropsSI('S', 'P', self.p_D9, 'H', self.h_D9, self.fluid)
-        self.x_D9 = CP.PropsSI('Q', 'P', self.p_D9, 'H', self.h_D9, self.fluid)
-        self.e_D9 = self.h_D9 - self.h_ref - self.T_ref * (self.s_D9 - self.s_ref)
+        # self.h_D9 = self.h_C1
+        # self.T_D9 = CP.PropsSI('T', 'P', self.p_D9, 'H', self.h_D9, self.fluid)
+        # self.s_D9 = CP.PropsSI('S', 'P', self.p_D9, 'H', self.h_D9, self.fluid)
+        # self.x_D9 = CP.PropsSI('Q', 'P', self.p_D9, 'H', self.h_D9, self.fluid)
+        # self.e_D9 = self.h_D9 - self.h_ref - self.T_ref * (self.s_D9 - self.s_ref)
 
         # State 8 - Turbine outlet
         self.p_D8 = self.p_D9
@@ -163,17 +182,66 @@ class CO2_battery(object):
         self.e_D8 = self.h_D8 - self.h_ref - self.T_ref * (self.s_D8 - self.s_ref)
         self.x_D8 = CP.PropsSI('Q', 'P', self.p_D8, 'T', self.T_D8, self.fluid)
 
+        # State 9 - PCHX outlet - Dome inlet
+        self.T_D9 = self.T_storage_water + self.pinch_PCHX
+        self.h_D9 = CP.PropsSI('H', 'P', self.p_D9, 'T', self.T_D9, self.fluid)
+        self.s_D9 = CP.PropsSI('S', 'P', self.p_D9, 'T', self.T_D9, self.fluid)
+        self.x_D9 = CP.PropsSI('Q', 'P', self.p_D9, 'T', self.T_D9, self.fluid)
+        self.e_D9 = self.h_D9 - self.h_ref - self.T_ref * (self.s_D9 - self.s_ref)
+
     
         # Mass flow rate
-        self.m_dot_CO2 = self.Pe / ((self.h_D7 - self.h_D8) * self.eta_mec * self.eta_elec)
-        print(self.m_dot_CO2) # !!!! = 54 kg/s dans le paper
-
+        self.m_dot_CO2 = self.Pe / ((self.h_D7 - self.h_D8) * self.eta_mec * self.eta_elec) # !!!! = 54 kg/s dans le paper
         self.m_dot_TS0 = self.m_dot_CO2/self.m_dot_r # !!!! = 700 kg/s dans le paper
-        print(self.m_dot_TS0)
 
-        
+        # Efficiencies
+        self.eta_rotex = (self.h_D7 - self.h_D8) / (self.e_D7 - self.e_D8)
+        self.vaporator_efficiency()
+        self.TES_efficiency()
+        self.PCHX_efficiency()
+
+        # Losses
+        # Wrong losses
+        self.loss_rotex = self.m_dot_CO2 * ((self.e_D7 - self.e_D8) - (self.h_D7 - self.h_D8))
+        self.loss_evaporator = self.m_dot_CO2 * (self.h_D2 - self.h_D1) * (1 - self.eta_transex_TES0)
+        self.loss_TES = self.m_dot_CO2 * (self.h_D7 - self.h_D2) * (1 - self.eta_transex_TES)
+        self.loss_PCHX = self.m_dot_CO2 * (self.h_D8 - self.h_D9) * (1 - self.eta_transex)
+        W_shaft = self.Pe / (self.eta_mec * self.eta_elec)
+        self.loss_mec = W_shaft * (1 - self.eta_mec)
+        self.loss_elec = W_shaft * self.eta_mec * (1 - self.eta_elec)
+
       
     def evaluate(self):
         self.discharge_phase()
         pass
 
+    def print_results(self):
+        print("Results of the CO2 battery discharge phase:")
+        print("Energy produced: {:.2f} kW".format(self.Pe*1e-3))
+        print("--- States ---")
+        print("State D0: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D0*1e-5, self.T_D0-273.15, self.h_D0*1e-3, self.s_D0*1e-3, self.x_D0))
+        print("State D1: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D1*1e-5, self.T_D1-273.15, self.h_D1*1e-3, self.s_D1*1e-3, self.x_D1))
+        print("State D2: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D2*1e-5, self.T_D2-273.15, self.h_D2*1e-3, self.s_D2*1e-3, self.x_D2))
+        print("State D7: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D7*1e-5, self.T_D7-273.15, self.h_D7*1e-3, self.s_D7*1e-3, self.x_D7))
+        print("State D8: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D8*1e-5, self.T_D8-273.15, self.h_D8*1e-3, self.s_D8*1e-3, self.x_D8))
+        print("State D9: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D9*1e-5, self.T_D9-273.15, self.h_D9*1e-3, self.s_D9*1e-3, self.x_D9))
+        print("State C1: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_C1*1e-5, self.T_C1-273.15, self.h_C1*1e-3, self.s_C1*1e-3, self.x_C1))
+        print("Water storage temperature: {:.2f} °C".format(self.T_storage_water-273.15))
+        print("Water heated temperature: {:.2f} °C".format(self.T_w_in-273.15))
+        print("TES hot outlet temperature: {:.2f} °C".format(self.T_storage_TES-273.15))
+        print("TES cold outlet temperature: {:.2f} °C".format(self.T_TES_out-273.15))
+        print("--- Flow rates ---")
+        print("Mass flow rate of CO2: {:.2f} kg/s".format(self.m_dot_CO2))
+        print("Mass flow rate of TS0: {:.2f} kg/s".format(self.m_dot_TS0))
+        print("--- Efficiencies ---")
+        print("Rotex efficiency: {:.2f} %".format(self.eta_rotex*100))
+        print("Heat exchanger efficiency TES0: {:.2f} %".format(self.eta_transex_TES0*100))
+        print("Heat exchanger efficiency TES: {:.2f} %".format(self.eta_transex_TES*100))
+        print("Heat exchanger efficiency PCHX: {:.2f} %".format(self.eta_transex*100))
+        print("--- Losses ---")
+        print("Rotex losses: {:.2f} kW".format(self.loss_rotex*1e-3))
+        print("Evaporator losses: {:.2f} kW".format(self.loss_evaporator*1e-3))
+        print("TES losses: {:.2f} kW".format(self.loss_TES*1e-3))
+        print("PCHX losses: {:.2f} kW".format(self.loss_PCHX*1e-3))
+        print("Mechanical losses: {:.2f} kW".format(self.loss_mec*1e-3))
+        print("Electrical losses: {:.2f} kW".format(self.loss_elec*1e-3))
