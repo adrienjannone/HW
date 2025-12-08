@@ -61,7 +61,7 @@ class CO2_battery(object):
         self.e_C1 = self.h_C1 - self.h_ref - self.T_ref * (self.s_C1 - self.s_ref)
         self.x_C1 = CP.PropsSI('Q', 'P', self.p_C1, 'T', self.T_C1, self.fluid)
 
-        #evaporator
+        #evaporator TS0
         self.T_D2 = 20 + 273.15
 
         self.T_w_hot = 25+273.15
@@ -71,20 +71,10 @@ class CO2_battery(object):
         self.m_dot_r = 0
         self.measured_pinch = 0
 
-
-        #TES_in
-        self.T_TES_in = self.T_storage_TES
-        self.p_TES = 1.1e5
-        self.h_TES_in = CP.PropsSI('H', 'T', self.T_TES_in, 'P', self.p_TES, 'water')
-        self.s_TES_in = CP.PropsSI('S', 'T', self.T_TES_in, 'P', self.p_TES, 'water')
-        self.e_TES_in = self.h_TES_in - self.h_ref - self.T_ref * (self.s_TES_in - self.s_ref)
-
-
-        #TES_out
+        #TES
+        self.T_D7 = 430 + 273.15
         self.T_TES_out = 25 + 273.15
-        self.h_TES_out = CP.PropsSI('H', 'T', self.T_TES_out, 'P', self.p_TES, 'water')
-        self.s_TES_out = CP.PropsSI('S', 'T', self.T_TES_out, 'P', self.p_TES, 'water')
-        self.e_TES_out = self.h_TES_out - self.h_ref - self.T_ref * (self.s_TES_out - self.s_ref)
+
         
 
         #TS0_in
@@ -100,46 +90,6 @@ class CO2_battery(object):
         self.s_TS0_out = CP.PropsSI('S', 'T', self.TS0_out, 'P', self.p_TS0, 'water')
         self.e_TS0_out = self.h_TS0_out - self.h_ref - self.T_ref * (self.s_TS0_out - self.s_ref)
 
-    def mass_ratio(self, p_evap):
-        h_hs_su = CP.PropsSI("H", "T", self.T_w_hot, "P", self.p_w, "water")  
-        h_hs_ex = CP.PropsSI("H", "T", self.T_w_cold, "P", self.p_w, "water") 
-
-        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid)  
-        h_cs_ex = CP.PropsSI("H", "T", self.T_D2, "P", p_evap, self.fluid)  
-
-        self.h_hs = (h_hs_su - h_hs_ex)  
-        self.h_cs = (h_cs_ex - h_cs_su)  
-        self.m_dot_r = self.h_hs / self.h_cs
-    
-    def get_pinch_SAT(self, p_evap):
-        self.mass_ratio(p_evap)
-        T_c = CP.PropsSI("T", "P", p_evap, "Q", 0, self.fluid)  
-        h_c = CP.PropsSI("H", "P", p_evap, "Q", 0, self.fluid)  
-        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid) 
-        dh = h_c - h_cs_su  
-        h_hs_ex = CP.PropsSI("H", "T", self.T_w_cold, "P", self.p_w, "water")  
-        
-        h_h = h_hs_ex + dh*self.m_dot_r  
-        T_h = CP.PropsSI("T", "H", h_h, "P", self.p_w, "water")  
-        pinch = T_h - T_c 
-        self.measured_pinch = pinch
-        return pinch
-    
-    def get_pinch_exit(self, p_evap): 
-        return self.T_w_hot - self.T_D2
-
-    def pinch_objective(self, p_evap):
-        self.mass_ratio(p_evap)
-        pinch = min(self.get_pinch_SAT(p_evap), self.get_pinch_exit(p_evap))
-        return pinch - self.pinch_TES0
-    
-    def evaporator(self):
-        p_cs_guess = 57e5 
-        p_evap_solution = opt.fsolve(self.pinch_objective, p_cs_guess)[0]
-        self.mass_ratio(p_evap_solution)
-        self.p_D1 = p_evap_solution
-        return
-    
     def vaporator_efficiency(self):
         self.eta_transex_TES0 = (self.m_dot_CO2*(self.e_D2-self.e_D1))/(self.m_dot_TS0*(self.e_TS0_in - self.e_TS0_out))
 
@@ -158,13 +108,94 @@ class CO2_battery(object):
         #self.eta_transex = self.m_dot_r* ((T2_m - self.T_ref)/T2_m)*(T1_m/(T1_m - self.T_ref))
         self.eta_transex_PCHX = (self.m_dot_TS0*(self.e_TS0_in - self.e_TS0_out))/(self.m_dot_CO2*(self.e_D8 - self.e_D9))
 
+    def mass_ratio_TS0(self, p_evap):
+        h_hs_su = CP.PropsSI("H", "T", self.T_w_hot, "P", self.p_w, "water")  
+        h_hs_ex = CP.PropsSI("H", "T", self.T_w_cold, "P", self.p_w, "water") 
+
+        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid)  
+        h_cs_ex = CP.PropsSI("H", "T", self.T_D2, "P", p_evap, self.fluid)  
+
+        self.h_hs = (h_hs_su - h_hs_ex)  
+        self.h_cs = (h_cs_ex - h_cs_su)  
+        self.m_dot_r = self.h_hs / self.h_cs
+    
+    def get_pinch_SAT_TS0(self, p_evap):
+        self.mass_ratio_TS0(p_evap)
+        T_c = CP.PropsSI("T", "P", p_evap, "Q", 0, self.fluid)  
+        h_c = CP.PropsSI("H", "P", p_evap, "Q", 0, self.fluid)  
+        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid) 
+        dh = h_c - h_cs_su  
+        h_hs_ex = CP.PropsSI("H", "T", self.T_w_cold, "P", self.p_w, "water")  
+        
+        h_h = h_hs_ex + dh*self.m_dot_r  
+        T_h = CP.PropsSI("T", "H", h_h, "P", self.p_w, "water")  
+        pinch = T_h - T_c 
+        self.measured_pinch = pinch
+        return pinch
+    
+    def get_pinch_exit_TS0(self, p_evap): 
+        return self.T_w_hot - self.T_D2
+
+    def pinch_objective_TS0(self, p_evap):
+        self.mass_ratio_TS0(p_evap)
+        pinch = min(self.get_pinch_SAT_TS0(p_evap), self.get_pinch_exit_TS0(p_evap))
+        return pinch - self.pinch_TES0
+    
+    def evaporator(self):
+        p_cs_guess = 57e5 
+        p_evap_solution = opt.fsolve(self.pinch_objective_TS0, p_cs_guess)[0]
+        self.mass_ratio_TS0(p_evap_solution)
+        self.p_D1 = p_evap_solution
+        return
+    
+    def mass_ratio_TES(self, p_hs):
+        h_hs_su = CP.PropsSI('H', 'T', self.T_storage_TES, 'P', p_hs,"water")
+        h_hs_ex = CP.PropsSI('H', 'T', self.T_TES_out, 'P', p_hs, 'water')
+
+        h_cs_su = CP.PropsSI('H', 'P', self.p_D2, 'T', self.T_D2, self.fluid)
+        h_cs_ex = CP.PropsSI('H','P', self.p_D2, 'T', self.T_D7, self.fluid)
+        self.h_hs = h_hs_su - h_hs_ex
+        self.h_cs = h_cs_ex - h_cs_su
+        self.m_dot_TES_r = self.h_hs / self.h_cs
+    
+    def get_pinch_SAT_TES(self, p_hs):
+        self.mass_ratio_TES(p_hs)
+        T_h = CP.PropsSI('T', 'P', p_hs, 'Q', 1, "water")
+        h_h = CP.PropsSI('H', 'P', p_hs, 'Q', 1, "water")
+        h_cs_su = CP.PropsSI('H', 'P', self.p_D2, 'T', self.T_D2, self.fluid)
+        h_hs_ex = CP.PropsSI('H', 'T', self.T_TES_out, 'P', p_hs, 'water')
+        dh = h_h - h_hs_ex
+        h_c = h_cs_su + dh/self.m_dot_TES_r
+        T_c = CP.PropsSI('T', 'H', h_c, 'P', self.p_D2, self.fluid)
+        pinch = T_h - T_c
+
+        return pinch
+    
+    def get_pinch_inlet_TES(self):
+        return self.T_TES_out - self.T_D2
+    
+    def get_pinch_exit_TES(self):
+        return self.T_storage_TES - self.T_D7
+    
+    def pinch_objective_TES(self, p_hs):
+        self.mass_ratio_TES(p_hs)
+        pinch = min(self.get_pinch_SAT_TES(p_hs), self.get_pinch_exit_TES(), self.get_pinch_inlet_TES())
+        return pinch - self.pinch_TES
+
     def TES_discharge(self):
-        self.T_D7 = self.T_storage_TES - self.pinch_TES
+
+        #self.T_D7 = self.T_storage_TES - self.pinch_TES
         self.p_D7 = self.p_D2 * (1-self.k_TES)
         self.h_D7 = CP.PropsSI('H', 'P', self.p_D7, 'T', self.T_D7, self.fluid)
         self.s_D7 = CP.PropsSI('S', 'P', self.p_D7, 'T', self.T_D7, self.fluid)
         self.e_D7 = self.h_D7 - self.h_ref - self.T_ref * (self.s_D7 - self.s_ref)
         self.x_D7 = CP.PropsSI('Q', 'P', self.p_D7, 'T', self.T_D7, self.fluid)
+
+        p_hs_guess = 50e5
+        p_TES_solution = opt.fsolve(self.pinch_objective_TES, p_hs_guess)[0]
+        self.mass_ratio_TES(p_TES_solution)
+        self.p_TES = p_TES_solution
+        return
 
 
     def discharge_phase(self):
@@ -197,6 +228,20 @@ class CO2_battery(object):
          # State 7 - TES outlet  
         self.TES_discharge()
 
+
+        print("p_TES (bar):", self.p_TES*1e-5) 
+
+        #TES_in
+        self.T_TES_in = self.T_storage_TES
+        self.h_TES_in = CP.PropsSI('H', 'T', self.T_TES_in, 'P', self.p_TES, 'water')
+        self.s_TES_in = CP.PropsSI('S', 'T', self.T_TES_in, 'P', self.p_TES, 'water')
+        self.e_TES_in = self.h_TES_in - self.h_ref - self.T_ref * (self.s_TES_in - self.s_ref)
+
+        #TES_out
+        self.h_TES_out = CP.PropsSI('H', 'T', self.T_TES_out, 'P', self.p_TES, 'water')
+        self.s_TES_out = CP.PropsSI('S', 'T', self.T_TES_out, 'P', self.p_TES, 'water')
+        self.e_TES_out = self.h_TES_out - self.h_ref - self.T_ref * (self.s_TES_out - self.s_ref)
+
         # State 9 - PCHX outlet - Dome inlet
         self.p_D9 = self.p_amb *(1+self.k_dome)
         # self.h_D9 = self.h_C1
@@ -225,7 +270,7 @@ class CO2_battery(object):
         # Mass flow rate
         self.m_dot_CO2 = self.Pe / ((self.h_D7 - self.h_D8) * self.eta_mec * self.eta_elec) 
         self.m_dot_TS0 = self.m_dot_CO2/self.m_dot_r 
-        self.m_dot_TES_r = (self.h_TES_in-self.h_TES_out)/(self.h_D7 - self.h_D2)
+        #self.m_dot_TES_r = (self.h_TES_in-self.h_TES_out)/(self.h_D7 - self.h_D2)
         self.m_dot_TES = self.m_dot_CO2/self.m_dot_TES_r
         print(self.m_dot_TES)
 
