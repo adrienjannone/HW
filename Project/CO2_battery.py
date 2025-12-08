@@ -101,13 +101,14 @@ class CO2_battery(object):
         return self.T_w_in - self.T_D2
 
     def pinch_objective(self, p_evap):
+        self.mass_ratio(p_evap)
         pinch = min(self.get_pinch_SAT(p_evap), self.get_pinch_exit(p_evap))
         return pinch - self.pinch_TES0
     
     def evaporator(self):
         p_cs_guess = 57e5 
-        self.mass_ratio(p_cs_guess)
         p_evap_solution = opt.fsolve(self.pinch_objective, p_cs_guess)[0]
+        self.mass_ratio(p_evap_solution)
         self.p_D1 = p_evap_solution
         return
     
@@ -149,6 +150,8 @@ class CO2_battery(object):
         # State 1 - Evaporator inlet - TS0 inlet
         self.T_D1 = self.T_D0
         self.evaporator()
+        # self.mass_ratio(self.p_D1)
+
         self.h_D1 = CP.PropsSI('H', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
         self.s_D1= CP.PropsSI('S', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
         self.e_D1 = self.h_D1 - self.h_ref - self.T_ref * (self.s_D1 - self.s_ref)
