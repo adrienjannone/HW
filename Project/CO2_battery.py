@@ -90,6 +90,17 @@ class CO2_battery(object):
         self.s_TS0_out = CP.PropsSI('S', 'T', self.TS0_out, 'P', self.p_TS0, 'water')
         self.e_TS0_out = self.h_TS0_out - self.h_ref - self.T_ref * (self.s_TS0_out - self.s_ref)
 
+        # self.set_ref()
+
+    def set_ref(self):
+        # CO2 H2O
+        #s=0, h=0 @ 1 bar, 15°C = 288.15 K
+        DCO2 = CP.PropsSI('DMOLAR','P',1e+5,'T',288.15,'CO2')
+        CP.set_reference_state('CO2', 288.15, DCO2, 0, 0)
+
+        Dw = CP.PropsSI('DMOLAR','Q',1,'T',273.15,'H2O')
+        CP.set_reference_state('H2O', 273.15, Dw, 0, 0)
+
     def vaporator_efficiency(self):
         self.eta_transex_TES0 = (self.m_dot_CO2*(self.e_D2-self.e_D1))/(self.m_dot_TS0*(self.e_TS0_in - self.e_TS0_out))
 
@@ -181,6 +192,63 @@ class CO2_battery(object):
         self.mass_ratio_TES(p_hs)
         pinch = min(self.get_pinch_SAT_TES(p_hs), self.get_pinch_exit_TES(), self.get_pinch_inlet_TES())
         return pinch - self.pinch_TES
+    
+
+    def plotTQTES(self):
+        """
+        Hot source supply: TES storage
+        Hot source exit: TES outlet
+        Cold source supply: D2
+        Cold source exit: D7
+        """
+        T_hs = np.linspace(self.T_TES_out, self.T_storage_TES, 100)
+        T_cs = np.linspace(self.T_D2, self.T_D7, 100)
+        h_hs = CP.PropsSI("H", "T", T_hs, "P", self.p_TES, "water") * 1e-3
+        h_cs = CP.PropsSI("H", "T", T_cs, "P", self.p_D1, "CO2") *1e-3
+
+        h_cs = h_cs * self.m_dot_TES_r # Scale
+        h_hs = h_hs - np.ones_like(h_hs)*h_hs[0] # put h_hs[0] = 0
+        h_cs = h_cs - np.ones_like(h_cs)*h_cs[0] # put h_cs[0] = 0
+        h_hs /= h_hs[-1] # put h_hs[-1] = 1
+        h_cs /= h_cs[-1] # put h_cs[-1] = 1
+
+        plt.figure()
+        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(self.p_TES/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(self.p_D1/1e5))
+        plt.xlabel("Normalized cumulative heat transfer [-]")
+        plt.ylabel("Temperature [°C]")
+        plt.title("Heat exchanger TQ diagram")
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    def plotTQTES0(self):
+        """
+        Hot source supply: water hot
+        Hot source exit: water cold
+        Cold source supply: D1
+        Cold source exit: D2
+        """
+        T_hs = np.linspace(self.T_w_cold, self.T_w_hot, 100)
+        T_cs = np.linspace(self.T_D1, self.T_D2, 100)
+        h_hs = CP.PropsSI("H", "T", T_hs, "P", self.p_w, "water") * 1e-3
+        h_cs = CP.PropsSI("H", "T", T_cs, "P", self.p_D1,"CO2") *1e-3
+
+        h_cs = h_cs * self.m_dot_r # Scale
+        h_hs = h_hs - np.ones_like(h_hs)*h_hs[0] # put h_hs[0] = 0
+        h_cs = h_cs - np.ones_like(h_cs)*h_cs[0] # put h_cs[0] = 0
+        h_hs /= h_hs[-1] # put h_hs[-1] = 1
+        h_cs /= h_cs[-1] # put h_cs[-1] = 1
+
+        plt.figure()
+        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(self.p_w/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(self.p_D1/1e5))
+        plt.xlabel("Normalized cumulative heat transfer [-]")
+        plt.ylabel("Temperature [°C]")
+        plt.title("Heat exchanger TQ diagram")
+        plt.legend()
+        plt.grid()
+        plt.show()
 
     def TES_discharge(self):
 
@@ -293,7 +361,19 @@ class CO2_battery(object):
       
     def evaluate(self):
         self.discharge_phase()
+        if self.plot:
+            self.fig_pie_ex()
+            self.plotTQTES()
+            self.plotTQTES0()
         pass
+
+    def fig_pie_ex(self):
+        label = ['Rotex losses', 'Evaporator losses', 'TES losses', 'PCHX losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
+        sizes = [self.loss_rotex, self.loss_evaporator, self.loss_TES, self.loss_PCHX, self.loss_mec, self.loss_elec, self.Pe]
+        plt.figure(figsize=(8, 8))
+        plt.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140)
+        plt.title('Exergy Losses Distribution in CO2 Battery Discharge Phase')
+        plt.show()
 
     def print_results(self):
         print("Results of the CO2 battery discharge phase:")
