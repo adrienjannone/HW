@@ -108,7 +108,6 @@ class CO2_battery(object):
         self.eta_transex_TES4 = (self.m_dot_CO2*(self.e_D7 - self.e_D5))/(self.m_dot_TSE4*(self.e_TES4_in - self.e_TES4_out))
 
 
-
     def PCHX_efficiency(self):
         self.eta_transex_PCHX = (self.m_dot_TS0*(self.e_TS0_in - self.e_TS0_out))/(self.m_dot_CO2*(self.e_D8 - self.e_D9))
 
