@@ -87,13 +87,13 @@ class CO2_battery(object):
         #TES
         self.T_TES1_in = 42+273.15
         self.T_TES1_out = 25+273.15
-        self.p_TES1    = 10.1e5
+        self.p_TES1    = 1.1e5
         self.T_TES2_in = 97+273.15
         self.T_TES2_out = 42+273.15
         self.p_TES2    = 1.1e5
         self.T_TES3_in = 300+273.15
         self.T_TES3_out = 97+273.15
-        self.p_TES3    = 1.1e5
+        self.p_TES3    = 86e5
         self.T_TES4_in = self.T_storage_TES
         self.T_TES4_out = 300+273.15
         self.p_TES4    = 1.1e5
@@ -191,11 +191,11 @@ class CO2_battery(object):
         return
     
     def TES3(self, TES3_in, TES3_out, p_TES3):
-        self.h_TES3_in = CP.PropsSI('H', 'T', TES3_in, 'P', p_TES3, 'INCOMP::PNF2')
-        self.s_TES3_in = CP.PropsSI('S', 'T', TES3_in, 'P', p_TES3, 'INCOMP::PNF2')
+        self.h_TES3_in = CP.PropsSI('H', 'T', TES3_in, 'P', p_TES3, 'water')
+        self.s_TES3_in = CP.PropsSI('S', 'T', TES3_in, 'P', p_TES3, 'water')
         self.e_TES3_in = self.h_TES3_in - self.h_ref - self.T_ref * (self.s_TES3_in - self.s_ref)
-        self.h_TES3_out = CP.PropsSI('H', 'T', TES3_out, 'P', p_TES3, 'INCOMP::PNF2')
-        self.s_TES3_out = CP.PropsSI('S', 'T', TES3_out, 'P', p_TES3, 'INCOMP::PNF2')
+        self.h_TES3_out = CP.PropsSI('H', 'T', TES3_out, 'P', p_TES3, 'water')
+        self.s_TES3_out = CP.PropsSI('S', 'T', TES3_out, 'P', p_TES3, 'water')
         self.e_TES3_out = self.h_TES3_out - self.h_ref - self.T_ref * (self.s_TES3_out - self.s_ref)
 
         self.T_D5 = TES3_in - self.pinch_TES
@@ -316,9 +316,10 @@ class CO2_battery(object):
         self.loss_elec = W_shaft * self.eta_mec * (1 - self.eta_elec)
 
 
-        
-        #PNF2 -> synthetic oil (-10,320)
-        #Nak -> salt (300,600) 
+        print(CP.PropsSI('Tcrit', 'Water')-273.15)
+        print("Water evaporation pressure at T_TES3_in",CP.PropsSI('P', 'T', 300+273.15, 'Q', 0, "water"))
+        #print("Water evaporation pressure at T_TES4_in",CP.PropsSI('P', 'T', self.T_storage_TES, 'Q', 0, "water"))
+
       
     def evaluate(self):
         self.discharge_phase()
