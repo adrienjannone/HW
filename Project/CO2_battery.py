@@ -86,7 +86,7 @@ class CO2_battery(object):
         #TES
         self.T_TES1_in = 42+273.15
         self.T_TES1_out = 25+273.15
-        self.p_TES1    = 10.1e5
+        self.p_TES1    = 1.1e5
         self.T_TES2_in = 97+273.15
         self.T_TES2_out = 42+273.15
         self.p_TES2    = 1.1e5
