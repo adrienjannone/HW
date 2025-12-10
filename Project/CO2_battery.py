@@ -43,7 +43,6 @@ class CO2_battery(object):
         self.pinch_TES = params['pinch_TES']
         self.pinch_PCHX = params['pinch_PCHX']
         self.fluid = params['fluid']
-        self.m_dot_CO2 = params['m_dot_cycle']
         self.Pe = inputs
         self.plot = plot
 
@@ -135,6 +134,28 @@ class CO2_battery(object):
         pinch = T_h - T_c 
         self.measured_pinch = pinch
         return pinch
+    
+    def plot_curves(self, T_hs_su, T_hs_ex, p_hs, fluid_hs, T_cs_su, T_cs_ex, p_cs, fluid_cs):
+        T_hs = np.linspace(T_hs_ex, T_hs_su, 100)
+        T_cs = np.linspace(T_cs_su, T_cs_ex, 100)
+        h_hs = CP.PropsSI("H", "T", T_hs, "P", p_hs, fluid_hs) * 1e-3
+        h_cs = CP.PropsSI("H", "T", T_cs, "P", p_cs, fluid_cs) *1e-3
+
+        h_cs = h_cs * self.m_dot_r # Scale
+        h_hs = h_hs - np.ones_like(h_hs)*h_hs[0] # put h_hs[0] = 0
+        h_cs = h_cs - np.ones_like(h_cs)*h_cs[0] # put h_cs[0] = 0
+        h_hs /= h_hs[-1] # put h_hs[-1] = 1
+        h_cs /= h_cs[-1] # put h_cs[-1] = 1
+
+        plt.figure()
+        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(p_hs/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(p_cs/1e5))
+        plt.xlabel("Normalized cumulative heat transfer [-]")
+        plt.ylabel("Temperature [°C]")
+        plt.title("Heat exchanger TQ diagram")
+        plt.legend()
+        plt.grid()
+        plt.show()
     
     def get_pinch_exit_TS0(self, p_evap): 
         return self.T_w_hot - self.T_D2
@@ -322,7 +343,23 @@ class CO2_battery(object):
       
     def evaluate(self):
         self.discharge_phase()
+        self.total_energy = self.Pe + self.loss_rotex + self.loss_evaporator + self.loss_TES1 + self.loss_TES2 + self.loss_TES3 + self.loss_TES4 + self.loss_PCHX + self.loss_mec + self.loss_elec
+        if self.plot:
+            self.fig_pie_ex()
+            self.plot_curves(self.T_w_hot, self.T_w_cold, self.p_w, 'water', self.T_D1, self.T_D2, self.p_D1, self.fluid) # TES0
+            self.plot_curves(self.T_TES1_in, self.T_TES1_out, self.p_TES1, 'water', self.T_D2, self.T_D3, self.p_D2, self.fluid) # TES1
+            self.plot_curves(self.T_TES2_in, self.T_TES2_out, self.p_TES2, 'water', self.T_D3, self.T_D4, self.p_D3, self.fluid) # TES2
+            self.plot_curves(self.T_TES3_in, self.T_TES3_out, self.p_TES3, 'INCOMP::PNF2', self.T_D4, self.T_D5, self.p_D4, self.fluid) # TES3
+            self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, 'INCOMP::NaK', self.T_D5, self.T_D7, self.p_D5, self.fluid) #
         pass
+
+    def fig_pie_ex(self):
+        label = ['Rotex losses', 'TES0 losses', 'TES1 losses','TES2 losses', 'TES3 losses','TES4 losses', 'PCHX losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
+        sizes = [self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_mec, self.loss_elec, self.Pe]
+        plt.figure(figsize=(8, 8))
+        plt.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140)
+        plt.title('Exergy Losses Distribution in CO2 Battery Discharge Phase. Total exergy input: {:.2f} kW'.format(self.total_energy*1e-3))
+        plt.show()
 
     def print_results(self):
         print("Results of the CO2 battery discharge phase:")
