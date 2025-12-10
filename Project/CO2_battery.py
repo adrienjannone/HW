@@ -43,7 +43,6 @@ class CO2_battery(object):
         self.pinch_TES = params['pinch_TES']
         self.pinch_PCHX = params['pinch_PCHX']
         self.fluid = params['fluid']
-        self.m_dot_CO2 = params['m_dot_cycle']
         self.Pe = inputs
         self.plot = plot
 
@@ -90,7 +89,7 @@ class CO2_battery(object):
         self.s_TS0_out = CP.PropsSI('S', 'T', self.TS0_out, 'P', self.p_TS0, 'water')
         self.e_TS0_out = self.h_TS0_out - self.h_ref - self.T_ref * (self.s_TS0_out - self.s_ref)
 
-        # self.set_ref()
+        self.set_ref()
 
     def set_ref(self):
         # CO2 H2O
