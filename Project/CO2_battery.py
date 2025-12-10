@@ -72,16 +72,16 @@ class CO2_battery(object):
         self.measured_pinch = 0
         
         #TS0_in
-        self.TS0_in = self.T_w_hot 
+        self.T_TS0_in = self.T_w_hot 
         self.p_TS0 = self.p_w
-        self.h_TS0_in = CP.PropsSI('H', 'T', self.TS0_in, 'P', self.p_TS0, 'water')
-        self.s_TS0_in = CP.PropsSI('S', 'T', self.TS0_in, 'P', self.p_TS0, 'water')
+        self.h_TS0_in = CP.PropsSI('H', 'T', self.T_TS0_in, 'P', self.p_TS0, 'water')
+        self.s_TS0_in = CP.PropsSI('S', 'T', self.T_TS0_in, 'P', self.p_TS0, 'water')
         self.e_TS0_in = self.h_TS0_in - self.h_ref - self.T_ref * (self.s_TS0_in - self.s_ref)
         
         #TS0_out
-        self.TS0_out = self.T_w_cold
-        self.h_TS0_out = CP.PropsSI('H', 'T', self.TS0_out, 'P', self.p_TS0, 'water')
-        self.s_TS0_out = CP.PropsSI('S', 'T', self.TS0_out, 'P', self.p_TS0, 'water')
+        self.T_TS0_out = self.T_w_cold
+        self.h_TS0_out = CP.PropsSI('H', 'T', self.T_TS0_out, 'P', self.p_TS0, 'water')
+        self.s_TS0_out = CP.PropsSI('S', 'T', self.T_TS0_out, 'P', self.p_TS0, 'water')
         self.e_TS0_out = self.h_TS0_out - self.h_ref - self.T_ref * (self.s_TS0_out - self.s_ref)
 
         #TES
@@ -325,17 +325,11 @@ class CO2_battery(object):
         self.discharge_phase()
         pass
 
-    def plotTQTES0(self):
-        """
-        Hot source supply: water hot
-        Hot source exit: water cold
-        Cold source supply: D1
-        Cold source exit: D2
-        """
-        T_hs = np.linspace(self.T_w_cold, self.T_w_hot, 100)
-        T_cs = np.linspace(self.T_D1, self.T_D2, 100)
-        h_hs = CP.PropsSI("H", "T", T_hs, "P", self.p_w, "water") * 1e-3
-        h_cs = CP.PropsSI("H", "T", T_cs, "P", self.p_D1,"CO2") *1e-3
+    def plot_curves(self, T_hs_su, T_hs_ex, p_hs, fluid_hs, T_cs_su, T_cs_ex, p_cs, fluid_cs):
+        T_hs = np.linspace(T_hs_ex, T_hs_su, 100)
+        T_cs = np.linspace(T_cs_su, T_cs_ex, 100)
+        h_hs = CP.PropsSI("H", "T", T_hs, "P", p_hs, fluid_hs) * 1e-3
+        h_cs = CP.PropsSI("H", "T", T_cs, "P", p_cs, fluid_cs) *1e-3
 
         h_cs = h_cs * self.m_dot_r # Scale
         h_hs = h_hs - np.ones_like(h_hs)*h_hs[0] # put h_hs[0] = 0
@@ -344,8 +338,8 @@ class CO2_battery(object):
         h_cs /= h_cs[-1] # put h_cs[-1] = 1
 
         plt.figure()
-        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(self.p_w/1e5))
-        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(self.p_D1/1e5))
+        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(p_hs/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(p_cs/1e5))
         plt.xlabel("Normalized cumulative heat transfer [-]")
         plt.ylabel("Temperature [°C]")
         plt.title("Heat exchanger TQ diagram")
@@ -376,8 +370,8 @@ class CO2_battery(object):
         print("State D8: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D8*1e-5, self.T_D8-273.15, self.h_D8*1e-3, self.s_D8*1e-3, self.x_D8))
         print("State D9: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D9*1e-5, self.T_D9-273.15, self.h_D9*1e-3, self.s_D9*1e-3, self.x_D9))
         print("State C1: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_C1*1e-5, self.T_C1-273.15, self.h_C1*1e-3, self.s_C1*1e-3, self.x_C1))
-        print("State TS0 inlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TS0*1e-5, self.TS0_in-273.15, self.h_TS0_in*1e-3, self.s_TS0_in*1e-3))
-        print("State TS0 outlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TS0*1e-5, self.TS0_out-273.15, self.h_TS0_out*1e-3, self.s_TS0_out*1e-3))
+        print("State TS0 inlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TS0*1e-5, self.T_TS0_in-273.15, self.h_TS0_in*1e-3, self.s_TS0_in*1e-3))
+        print("State TS0 outlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TS0*1e-5, self.T_TS0_out-273.15, self.h_TS0_out*1e-3, self.s_TS0_out*1e-3))
         print("State TES1 inlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TES1*1e-5, self.T_TES1_in-273.15, self.h_TES1_in*1e-3, self.s_TES1_in*1e-3))
         print("State TES1 outlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TES1*1e-5, self.T_TES1_out-273.15, self.h_TES1_out*1e-3, self.s_TES1_out*1e-3))
         print("State TES2 inlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TES2*1e-5, self.T_TES2_in-273.15, self.h_TES2_in*1e-3, self.s_TES2_in*1e-3))
@@ -415,7 +409,12 @@ class CO2_battery(object):
         print("Mechanical losses: {:.2f} kW".format(self.loss_mec*1e-3))
         print("Electrical losses: {:.2f} kW".format(self.loss_elec*1e-3))
         self.fig_pie_ex()
-        self.plotTQTES0()
+        self.plot_curves(self.T_TS0_in, self.T_TS0_out, self.p_w, "water", self.T_D1, self.T_D2, self.p_D1, self.fluid)
+        self.plot_curves(self.T_TES1_in, self.T_TES1_out, self.p_TES1, "water", self.T_D2, self.T_D3, self.p_D3, self.fluid)
+        self.plot_curves(self.T_TES2_in, self.T_TES2_out, self.p_TES2, "water", self.T_D3, self.T_D4, self.p_D4, self.fluid)
+        self.plot_curves(self.T_TES3_in, self.T_TES3_out, self.p_TES3, "water", self.T_D4, self.T_D5, self.p_D5, self.fluid)
+        self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, "INCOMP::NaK", self.T_D5, self.T_D7, self.p_D7, self.fluid)
+        
 
 
         #QUESTIONS : 
