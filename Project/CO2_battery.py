@@ -259,7 +259,7 @@ class CO2_battery(object):
         self.e_D7 = self.h_D7 - self.h_ref - self.T_ref * (self.s_D7 - self.s_ref)
         self.x_D7 = CP.PropsSI('Q', 'P', self.p_D7, 'T', self.T_D7, self.fluid)
 
-        p_hs_guess = 50e5
+        p_hs_guess = 166e5
         p_TES_solution = opt.fsolve(self.pinch_objective_TES, p_hs_guess)[0]
         self.mass_ratio_TES(p_TES_solution)
         self.p_TES = p_TES_solution
