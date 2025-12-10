@@ -325,6 +325,43 @@ class CO2_battery(object):
         self.discharge_phase()
         pass
 
+    def plotTQTES0(self):
+        """
+        Hot source supply: water hot
+        Hot source exit: water cold
+        Cold source supply: D1
+        Cold source exit: D2
+        """
+        T_hs = np.linspace(self.T_w_cold, self.T_w_hot, 100)
+        T_cs = np.linspace(self.T_D1, self.T_D2, 100)
+        h_hs = CP.PropsSI("H", "T", T_hs, "P", self.p_w, "water") * 1e-3
+        h_cs = CP.PropsSI("H", "T", T_cs, "P", self.p_D1,"CO2") *1e-3
+
+        h_cs = h_cs * self.m_dot_r # Scale
+        h_hs = h_hs - np.ones_like(h_hs)*h_hs[0] # put h_hs[0] = 0
+        h_cs = h_cs - np.ones_like(h_cs)*h_cs[0] # put h_cs[0] = 0
+        h_hs /= h_hs[-1] # put h_hs[-1] = 1
+        h_cs /= h_cs[-1] # put h_cs[-1] = 1
+
+        plt.figure()
+        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(self.p_w/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(self.p_D1/1e5))
+        plt.xlabel("Normalized cumulative heat transfer [-]")
+        plt.ylabel("Temperature [°C]")
+        plt.title("Heat exchanger TQ diagram")
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+
+    def fig_pie_ex(self):
+        label = ['Rotex losses', 'Evaporator losses (TS0)', 'TS1 losses', 'TS2 losses', 'TS3 losses', 'TS4 losses', 'PCHX losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
+        sizes = [self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_mec, self.loss_elec, self.Pe]
+        plt.figure(figsize=(8, 8))
+        plt.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140)
+        plt.title('Exergy Losses Distribution in CO2 Battery Discharge Phase')
+        plt.show()
+
     def print_results(self):
         print("Results of the CO2 battery discharge phase:")
         print("Energy produced: {:.2f} kW".format(self.Pe*1e-3))
@@ -377,7 +414,8 @@ class CO2_battery(object):
         print("PCHX losses: {:.2f} kW".format(self.loss_PCHX*1e-3))
         print("Mechanical losses: {:.2f} kW".format(self.loss_mec*1e-3))
         print("Electrical losses: {:.2f} kW".format(self.loss_elec*1e-3))
-
+        self.fig_pie_ex()
+        self.plotTQTES0()
 
 
         #QUESTIONS : 
