@@ -88,13 +88,13 @@ class CO2_battery(object):
         self.T_TES1_out = 25+273.15
         self.p_TES1    = 1.1e5
         self.T_TES2_in = 97+273.15
-        self.T_TES2_out = 42+273.15
+        self.T_TES2_out = 43+273.15
         self.p_TES2    = 1.1e5
         self.T_TES3_in = 300+273.15
-        self.T_TES3_out = 97+273.15
+        self.T_TES3_out = 98+273.15
         self.p_TES3    = 1.1e5
         self.T_TES4_in = self.T_storage_TES
-        self.T_TES4_out = 300+273.15
+        self.T_TES4_out = 301+273.15
         self.p_TES4    = 1.1e5
 
     def vaporator_efficiency(self):
@@ -177,14 +177,11 @@ class CO2_battery(object):
     
     def TES1(self, TES1_in, TES1_out, p_TES1):
         self.h_TES1_in = CP.PropsSI('H', 'T', TES1_in, 'P', p_TES1, 'water')
-        print(self.h_TES1_in)
         self.s_TES1_in = CP.PropsSI('S', 'T', TES1_in, 'P', p_TES1, 'water')
-        print(self.s_TES1_in)
         self.e_TES1_in = self.h_TES1_in - self.h_ref - self.T_ref * (self.s_TES1_in - self.s_ref)
         self.h_TES1_out = CP.PropsSI('H', 'T', TES1_out, 'P', p_TES1, 'water')
         self.s_TES1_out = CP.PropsSI('S', 'T', TES1_out, 'P', p_TES1, 'water')
         self.x_TES1_out = CP.PropsSI('Q', 'T', TES1_out, 'P', p_TES1, 'water')
-        print(self.x_TES1_out)
         self.e_TES1_out = self.h_TES1_out - self.h_ref - self.T_ref * (self.s_TES1_out - self.s_ref)
 
         self.T_D3 = TES1_in - self.pinch_TES
@@ -336,6 +333,7 @@ class CO2_battery(object):
         self.loss_TES3 = self.m_dot_TSE3 * (self.e_TES3_in - self.e_TES3_out) - self.m_dot_CO2 * (self.e_D5 - self.e_D4)
         self.loss_TES4 = self.m_dot_TSE4 * (self.e_TES4_in - self.e_TES4_out) - self.m_dot_CO2 * (self.e_D7 - self.e_D5)
         self.loss_PCHX = self.m_dot_CO2 * (self.e_D8 - self.e_D9) - self.m_dot_TS0 * (self.e_TS0_in - self.e_TS0_out)
+        self.loss_left = self.m_dot_CO2 * (self.e_D9 - self.e_C1)
         W_shaft = self.Pe / (self.eta_mec * self.eta_elec)
         self.loss_mec = W_shaft * (1 - self.eta_mec)
         self.loss_elec = W_shaft * self.eta_mec * (1 - self.eta_elec)
@@ -358,8 +356,8 @@ class CO2_battery(object):
         pass
 
     def fig_pie_ex(self):
-        label = ['Rotex losses', 'TES0 losses', 'TES1 losses','TES2 losses', 'TES3 losses','TES4 losses', 'PCHX losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
-        sizes = [self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_mec, self.loss_elec, self.Pe]
+        label = ['Rotex losses', 'TES0 losses', 'TES1 losses','TES2 losses', 'TES3 losses','TES4 losses', 'PCHX losses','Leftover losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
+        sizes = [self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_left, self.loss_mec, self.loss_elec, self.Pe]
         plt.figure(figsize=(8, 8))
         plt.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140)
         plt.title('Exergy Losses Distribution in CO2 Battery Discharge Phase. Total exergy input: {:.2f} kW'.format(self.total_energy*1e-3))
@@ -415,6 +413,7 @@ class CO2_battery(object):
         print("TES3 losses: {:.2f} kW".format(self.loss_TES3*1e-3))
         print("TES4 losses: {:.2f} kW".format(self.loss_TES4*1e-3))
         print("PCHX losses: {:.2f} kW".format(self.loss_PCHX*1e-3))
+        print("Leftover exergy losses: {:.2f} kW".format(self.loss_left*1e-3))
         print("Mechanical losses: {:.2f} kW".format(self.loss_mec*1e-3))
         print("Electrical losses: {:.2f} kW".format(self.loss_elec*1e-3))
 
