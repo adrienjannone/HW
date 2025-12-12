@@ -1,7 +1,7 @@
 from scipy import optimize
 import CoolProp.CoolProp as CP
 import numpy as np
-from CO2_battery import CO2_Battery
+from CO2_battery import CO2_battery
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
 
@@ -51,3 +51,25 @@ params = {
     'pinch_PCHX': pinch_PCHX,
     'fluid': 'CO2',
 }
+
+
+"""
+Play with the TES input and ouput temperatures to minimize the CO2 mass flow rate
+"""
+def objective(x):
+    T_storage_water_opt = x[0]
+    T_storage_TES_opt = x[1]
+    params_opt = params.copy()
+    params_opt['T_storage_water'] = T_storage_water_opt
+    params_opt['T_storage_TES'] = T_storage_TES_opt
+    dome_opt = CO2_battery(inputs, params_opt, False)
+    dome_opt.evaluate()
+    return dome_opt.m_dot_CO2
+
+x0 = [T_storage_water, T_storage_TES]
+bounds = [(273.15 + 10, 273.15 + 40), (273.15 + 400, 273.15 + 600)]
+result = optimize.minimize(objective, x0, bounds=bounds, method='L-BFGS-B')
+
+print("Optimal water storage temperature (K): ", result.x[0])
+print("Optimal TES storage temperature (K): ", result.x[1])
+print("Minimum CO2 mass flow rate (kg/s): ", result.fun)
