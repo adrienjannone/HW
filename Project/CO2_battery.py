@@ -358,8 +358,9 @@ class CO2_battery(object):
     def fig_pie_ex(self):
         label = ['Rotex losses', 'TES0 losses', 'TES1 losses','TES2 losses', 'TES3 losses','TES4 losses', 'PCHX losses','Leftover losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
         sizes = [self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_left, self.loss_mec, self.loss_elec, self.Pe]
+        colors = ['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0','#ffb3e6','#c4e17f','#f7c6c7','#d4a5a5','#a3a3a3','#8fd9b6']
         plt.figure(figsize=(8, 8))
-        plt.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140)
+        plt.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140, colors=colors)
         plt.title('Exergy Losses Distribution in CO2 Battery Discharge Phase. Total exergy input: {:.2f} kW'.format(self.total_energy*1e-3))
         plt.show()
 

@@ -32,7 +32,6 @@ pinch_TES0 = 2                      # K
 pinch_TES = 7.5                     # K
 pinch_PCHX = 5                      # K
 p_amb = 1e5                         # Pa
-m_dot_cycle = 54                    # kg/s
 inputs = Pe
 params = {
     'p_storage_co2_liquid': p_storage_co2_liquid,
@@ -51,5 +50,4 @@ params = {
     'pinch_TES': pinch_TES,
     'pinch_PCHX': pinch_PCHX,
     'fluid': 'CO2',
-    'm_dot_cycle' : m_dot_cycle
 }
