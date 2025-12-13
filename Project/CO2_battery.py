@@ -98,6 +98,20 @@ class CO2_battery(object):
         self.T_TES4_out = 301+273.15
         self.p_TES4    = 1.1e5
 
+    def TES_Parameters(self, x):
+        self.T_TES1_in = x[0]
+        self.T_TES2_in = x[1]
+        self.T_TES3_in = x[2]
+        self.T_TES1_out = x[3]
+        self.T_TES2_out = x[4]
+        self.T_TES3_out = x[5]
+        self.T_TES4_out = x[6]
+        self.p_TES1    = x[7]
+        self.p_TES2    = x[8]
+        self.p_TES3    = x[9]
+        self.p_TES4    = x[10]
+        self.TS0_in = x[11]
+
     def vaporator_efficiency(self):
         self.eta_transex_TES0 = (self.m_dot_CO2*(self.e_D2-self.e_D1))/(self.m_dot_TS0*(self.e_TS0_in - self.e_TS0_out))
 
