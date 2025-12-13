@@ -67,7 +67,7 @@ def objective(x):
     return dome_opt.m_dot_CO2
 
 x0 = [T_storage_water, T_storage_TES]
-bounds = [(273.15 + 10, 273.15 + 40), (273.15 + 400, 273.15 + 600)]
+bounds = [(273.15 + 15, 273.15 + 40), (273.15 + 400, 273.15 + 600)]
 result = optimize.minimize(objective, x0, bounds=bounds, method='L-BFGS-B')
 
 print("Optimal water storage temperature (K): ", result.x[0])

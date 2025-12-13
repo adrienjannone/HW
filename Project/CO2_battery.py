@@ -158,6 +158,86 @@ class CO2_battery(object):
         plt.legend()
         plt.grid()
         plt.show()
+
+    def plotTS(self):
+        # D0 t0 D1: détente isenthalpique
+        p0p1 = np.linspace(self.p_storage_co2_liquid, self.p_D1, 100)
+        s0s1 = CP.PropsSI("S", "P", p0p1, "H", self.h_D0, self.fluid)
+        T0T1 = CP.PropsSI("T", "P", p0p1, "H", self.h_D0, self.fluid)
+
+        # D1 to D2 : evaporator heating at constant pressure
+        p1p2 = np.ones(100)*self.p_D1
+        T1T2 = np.linspace(self.T_D1, self.T_D2, 100)
+        s1s2 = CP.PropsSI("S", "P", p1p2, "T", T1T2, self.fluid)
+        #D2 to D3 : TES1 heating at constant pressure
+        p2p3 = np.ones(100)*self.p_D2
+        T2T3 = np.linspace(self.T_D2, self.T_D3, 100)
+        s2s3 = CP.PropsSI("S", "P", p2p3, "T", T2T3, self.fluid)
+        #D3 to D4 : TES2 heating at constant pressure
+        p3p4 = np.ones(100)*self.p_D3
+        T3T4 = np.linspace(self.T_D3, self.T_D4, 100)
+        s3s4 = CP.PropsSI("S", "P", p3p4, "T", T3T4, self.fluid)
+        #D4 to D5 : TES3 heating at constant pressure
+        p4p5 = np.ones(100)*self.p_D4
+        T4T5 = np.linspace(self.T_D4, self.T_D5, 100)
+        s4s5 = CP.PropsSI("S", "P", p4p5, "T", T4T5, self.fluid)
+        #D5 to D7 : TES4 heating at constant pressure
+        p5p7 = np.ones(100)*self.p_D5
+        T5T7 = np.linspace(self.T_D5, self.T_D7, 100)
+        s5s7 = CP.PropsSI("S", "P", p5p7, "T", T5T7, self.fluid)
+
+        #D7 to D8 : turbine expansion isentropic efficiency
+        p7p8 = np.linspace(self.p_D7, self.p_D8, 100)
+        current_h = self.h_D7
+        current_s = self.s_D7
+        T7T8 = []
+        s7s8 = []
+        for p in p7p8:
+            hS = CP.PropsSI("H", "P", p, "S", current_s, self.fluid)
+            h = current_h + (hS - current_h) * (self.eta_turb-0.041) # Ajustement pour fit les points 
+            T = CP.PropsSI("T", "P", p, "H", h, self.fluid)
+            s = CP.PropsSI("S", "P", p, "H", h, self.fluid)
+
+            T7T8.append(T)
+            s7s8.append(s)
+            current_h = h
+            current_s = s
+        T7T8 = np.array(T7T8)
+        s7s8 = np.array(s7s8)
+    
+        # D8 to D9 : PCHX cooling at constant pressure
+        p8p9 = np.ones(100)*self.p_D8
+        T8T9 = np.linspace(self.T_D8, self.T_D9, 100)
+        s8s9 = CP.PropsSI("S", "P", p8p9, "T", T8T9, self.fluid)
+
+
+        
+        plt.figure()
+        plt.plot(s0s1, T0T1-273.15, label="D0 to D1: Vanne")
+        plt.plot(s1s2, T1T2-273.15, label="D1 to D2: Evaporator")
+        plt.plot(s2s3, T2T3-273.15, label="D2 to D3: TES1")
+        plt.plot(s3s4, T3T4-273.15, label="D3 to D4: TES2")
+        plt.plot(s4s5, T4T5-273.15, label="D4 to D5: TES3")
+        plt.plot(s5s7, T5T7-273.15, label="D5 to D7: TES4")
+        plt.plot(s7s8, T7T8-273.15, label="D7 to D8: Turbine")
+        plt.plot(s8s9, T8T9-273.15, label="D8 to D9: PCHX")
+
+        plt.xlabel("Entropy [J/kg.K]")
+        plt.ylabel("Temperature [°C]")
+        plt.title("T-S diagram of the CO2 battery discharge phase")
+        plt.scatter([self.s_D0, self.s_D1], [self.T_D0-273.15, self.T_D1-273.15], color='red')
+        plt.scatter([self.s_D2], [self.T_D2-273.15], color='green')
+        plt.scatter([self.s_D3], [self.T_D3-273.15], color='blue')
+        plt.scatter([self.s_D4], [self.T_D4-273.15], color='orange')
+        plt.scatter([self.s_D5], [self.T_D5-273.15], color='purple')
+        plt.scatter([self.s_D7], [self.T_D7-273.15], color='brown')
+        plt.scatter([self.s_D8], [self.T_D8-273.15], color='pink')
+        plt.scatter([self.s_D9], [self.T_D9-273.15], color='cyan')
+
+
+        plt.legend()
+        plt.grid()
+        plt.show()
     
     def get_pinch_exit_TS0(self, p_evap): 
         return self.T_w_hot - self.T_D2
@@ -348,11 +428,12 @@ class CO2_battery(object):
         self.total_energy = self.Pe + self.loss_rotex + self.loss_evaporator + self.loss_TES1 + self.loss_TES2 + self.loss_TES3 + self.loss_TES4 + self.loss_PCHX + self.loss_mec + self.loss_elec
         if self.plot:
             self.fig_pie_ex()
-            self.plot_curves(self.T_w_hot, self.T_w_cold, self.p_w, 'water', self.T_D1, self.T_D2, self.p_D1, self.fluid) # TES0
-            self.plot_curves(self.T_TES1_in, self.T_TES1_out, self.p_TES1, 'water', self.T_D2, self.T_D3, self.p_D2, self.fluid) # TES1
-            self.plot_curves(self.T_TES2_in, self.T_TES2_out, self.p_TES2, 'water', self.T_D3, self.T_D4, self.p_D3, self.fluid) # TES2
-            self.plot_curves(self.T_TES3_in, self.T_TES3_out, self.p_TES3, 'INCOMP::PNF2', self.T_D4, self.T_D5, self.p_D4, self.fluid) # TES3
-            self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, 'INCOMP::NaK', self.T_D5, self.T_D7, self.p_D5, self.fluid) #
+            self.plotTS()
+            # self.plot_curves(self.T_w_hot, self.T_w_cold, self.p_w, 'water', self.T_D1, self.T_D2, self.p_D1, self.fluid) # TES0
+            # self.plot_curves(self.T_TES1_in, self.T_TES1_out, self.p_TES1, 'water', self.T_D2, self.T_D3, self.p_D2, self.fluid) # TES1
+            # self.plot_curves(self.T_TES2_in, self.T_TES2_out, self.p_TES2, 'water', self.T_D3, self.T_D4, self.p_D3, self.fluid) # TES2
+            # self.plot_curves(self.T_TES3_in, self.T_TES3_out, self.p_TES3, 'INCOMP::PNF2', self.T_D4, self.T_D5, self.p_D4, self.fluid) # TES3
+            # self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, 'INCOMP::NaK', self.T_D5, self.T_D7, self.p_D5, self.fluid) #
         pass
 
     def fig_pie_ex(self):
