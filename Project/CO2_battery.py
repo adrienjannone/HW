@@ -212,11 +212,11 @@ class CO2_battery(object):
         h_cs /= h_cs[-1] # put h_cs[-1] = 1
 
         plt.figure()
-        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(self.p_TES/1e5))
-        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(self.p_D1/1e5))
+        plt.plot(h_hs, T_hs-273.15, label="Water side at p = {:.2f} bar".format(self.p_TES/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="CO2 side at p = {:.2f} bar".format(self.p_D1/1e5))
         plt.xlabel("Normalized cumulative heat transfer [-]")
         plt.ylabel("Temperature [°C]")
-        plt.title("Heat exchanger TQ diagram")
+        plt.title("TES TQ diagram")
         plt.legend()
         plt.grid()
         plt.show()
@@ -240,11 +240,11 @@ class CO2_battery(object):
         h_cs /= h_cs[-1] # put h_cs[-1] = 1
 
         plt.figure()
-        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(self.p_w/1e5))
-        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(self.p_D1/1e5))
+        plt.plot(h_hs, T_hs-273.15, label="Water side at p = {:.2f} bar".format(self.p_w/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="CO2 side at p = {:.2f} bar".format(self.p_D1/1e5))
         plt.xlabel("Normalized cumulative heat transfer [-]")
         plt.ylabel("Temperature [°C]")
-        plt.title("Heat exchanger TQ diagram")
+        plt.title("Evaporator (TS0) TQ diagram")
         plt.legend()
         plt.grid()
         plt.show()
