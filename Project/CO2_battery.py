@@ -62,6 +62,7 @@ class CO2_battery(object):
 
         #evaporator TS0
         self.T_D2 = 20 + 273.15
+        self.p_cs_guess = 57e5 
 
         self.T_w_hot = 25+273.15
         self.T_w_cold = self.T_storage_water
@@ -135,8 +136,8 @@ class CO2_battery(object):
         T_h = CP.PropsSI("T", "H", h_h, "P", self.p_w, "water")  
         pinch = T_h - T_c 
         self.measured_pinch = pinch
-        return pinch
-    
+        return pinch     
+      
     def plot_curves(self, T_hs_su, T_hs_ex, p_hs, fluid_hs, T_cs_su, T_cs_ex, p_cs, fluid_cs):
         T_hs = np.linspace(T_hs_ex, T_hs_su, 100)
         T_cs = np.linspace(T_cs_su, T_cs_ex, 100)
@@ -168,8 +169,7 @@ class CO2_battery(object):
         return pinch - self.pinch_TES0
     
     def evaporator(self):
-        p_cs_guess = 57e5 
-        p_evap_solution = opt.fsolve(self.pinch_objective_TS0, p_cs_guess)[0]
+        p_evap_solution = opt.fsolve(self.pinch_objective_TS0, self.p_cs_guess)[0]
         self.mass_ratio_TS0(p_evap_solution)
         self.p_D1 = p_evap_solution
         return
@@ -338,7 +338,12 @@ class CO2_battery(object):
         self.loss_mec = W_shaft * (1 - self.eta_mec)
         self.loss_elec = W_shaft * self.eta_mec * (1 - self.eta_elec)
 
-
+        self.p = {'p_D0' : self.p_D0, 'p_D1' : self.p_D1, 'p_D2' : self.p_D2, 'p_D3' : self.p_D3, 'p_D4' : self.p_D4, 'p_D5' : self.p_D5, 'p_D7' : self.p_D7, 'p_D8' : self.p_D8, 'p_D9' : self.p_D9}
+        self.T = {'T_D0' : self.T_D0, 'T_D1' : self.T_D1, 'T_D2' : self.T_D2, 'T_D3' : self.T_D3, 'T_D4' : self.T_D4, 'T_D5' : self.T_D5, 'T_D7' : self.T_D7, 'T_D8' : self.T_D8,  'T_D9' : self.T_D9}
+        self.h = {'h_D0' : self.h_D0, 'h_D1' : self.h_D1, 'h_D2' : self.h_D2, 'h_D3' : self.h_D3, 'h_D4' : self.h_D4, 'h_D5' : self.h_D5, 'h_D7' : self.h_D7, 'h_D8' : self.h_D8, 'h_D9' : self.h_D9}
+        self.s = {'s_D0' : self.s_D0, 's_D1' : self.s_D1, 's_D2' : self.s_D2, 's_D3' : self.s_D3, 's_D4' : self.s_D4, 's_D5' : self.s_D5, 's_D7' : self.s_D7, 's_D8' : self.s_D8, 's_D9' : self.s_D9}
+        self.x = {'x_D0' : self.x_D0, 'x_D1' : self.x_D1, 'x_D2' : self.x_D2, 'x_D3' : self.x_D3, 'x_D4' : self.x_D4, 'x_D5' : self.x_D5, 'x_D7' : self.x_D7, 'x_D8' : self.x_D8, 'x_D9' : self.x_D9}
+        self.e = {'e_D0' : self.e_D0, 'e_D1' : self.e_D1, 'e_D2' : self.e_D2, 'e_D3' : self.e_D3, 'e_D4' : self.e_D4, 'e_D5' : self.e_D5, 'e_D7' : self.e_D7, 'e_D8' : self.e_D8, 'e_D9' : self.e_D9}
         
         #PNF2 -> synthetic oil (-10,320)
         #Nak -> salt (300,600) 
@@ -352,8 +357,8 @@ class CO2_battery(object):
             self.plot_curves(self.T_TES1_in, self.T_TES1_out, self.p_TES1, 'water', self.T_D2, self.T_D3, self.p_D2, self.fluid) # TES1
             self.plot_curves(self.T_TES2_in, self.T_TES2_out, self.p_TES2, 'water', self.T_D3, self.T_D4, self.p_D3, self.fluid) # TES2
             self.plot_curves(self.T_TES3_in, self.T_TES3_out, self.p_TES3, 'INCOMP::PNF2', self.T_D4, self.T_D5, self.p_D4, self.fluid) # TES3
-            self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, 'INCOMP::NaK', self.T_D5, self.T_D7, self.p_D5, self.fluid) #
-        pass
+            self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, 'INCOMP::NaK', self.T_D5, self.T_D7, self.p_D5, self.fluid) # TES4
+        return self.p, self.T, self.h, self.s, self.x, self.e, self.m_dot_CO2, self.m_dot_TS0, self.m_dot_TSE1, self.m_dot_TSE2, self.m_dot_TSE3, self.m_dot_TSE4, self.eta_rotex, self.eta_transex_TES0, self.eta_transex_TES1, self.eta_transex_TES2, self.eta_transex_TES3, self.eta_transex_TES4, self.eta_transex_PCHX, self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_mec, self.loss_elec, self.total_energy
 
     def fig_pie_ex(self):
         label = ['Rotex losses', 'TES0 losses', 'TES1 losses','TES2 losses', 'TES3 losses','TES4 losses', 'PCHX losses','Leftover losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
@@ -368,16 +373,16 @@ class CO2_battery(object):
         print("Results of the CO2 battery discharge phase:")
         print("Energy produced: {:.2f} kW".format(self.Pe*1e-3))
         print("--- States ---")
-        print("State D0: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D0*1e-5, self.T_D0-273.15, self.h_D0*1e-3, self.s_D0*1e-3, self.x_D0))
-        print("State D1: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D1*1e-5, self.T_D1-273.15, self.h_D1*1e-3, self.s_D1*1e-3, self.x_D1))
-        print("State D2: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D2*1e-5, self.T_D2-273.15, self.h_D2*1e-3, self.s_D2*1e-3, self.x_D2))
-        print("State D3: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D3*1e-5, self.T_D3-273.15, self.h_D3*1e-3, self.s_D3*1e-3, self.x_D3))
-        print("State D4: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D4*1e-5, self.T_D4-273.15, self.h_D4*1e-3, self.s_D4*1e-3, self.x_D4))
-        print("State D5: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D5*1e-5, self.T_D5-273.15, self.h_D5*1e-3, self.s_D5*1e-3, self.x_D5))
-        print("State D7: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D7*1e-5, self.T_D7-273.15, self.h_D7*1e-3, self.s_D7*1e-3, self.x_D7))
-        print("State D8: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D8*1e-5, self.T_D8-273.15, self.h_D8*1e-3, self.s_D8*1e-3, self.x_D8))
-        print("State D9: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_D9*1e-5, self.T_D9-273.15, self.h_D9*1e-3, self.s_D9*1e-3, self.x_D9))
-        print("State C1: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}".format(self.p_C1*1e-5, self.T_C1-273.15, self.h_C1*1e-3, self.s_C1*1e-3, self.x_C1))
+        print("State D0: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D0*1e-5, self.T_D0-273.15, self.h_D0*1e-3, self.s_D0*1e-3, self.x_D0, self.e_D0))
+        print("State D1: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D1*1e-5, self.T_D1-273.15, self.h_D1*1e-3, self.s_D1*1e-3, self.x_D1, self.e_D1))
+        print("State D2: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D2*1e-5, self.T_D2-273.15, self.h_D2*1e-3, self.s_D2*1e-3, self.x_D2, self.e_D2))
+        print("State D3: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D3*1e-5, self.T_D3-273.15, self.h_D3*1e-3, self.s_D3*1e-3, self.x_D3, self.e_D3))
+        print("State D4: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D4*1e-5, self.T_D4-273.15, self.h_D4*1e-3, self.s_D4*1e-3, self.x_D4, self.e_D4))
+        print("State D5: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D5*1e-5, self.T_D5-273.15, self.h_D5*1e-3, self.s_D5*1e-3, self.x_D5, self.e_D5))
+        print("State D7: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D7*1e-5, self.T_D7-273.15, self.h_D7*1e-3, self.s_D7*1e-3, self.x_D7, self.e_D7))
+        print("State D8: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D8*1e-5, self.T_D8-273.15, self.h_D8*1e-3, self.s_D8*1e-3, self.x_D8, self.e_D8))
+        print("State D9: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_D9*1e-5, self.T_D9-273.15, self.h_D9*1e-3, self.s_D9*1e-3, self.x_D9, self.e_D9))
+        print("State C1: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K, x = {:.2f}, e = {:.2f}".format(self.p_C1*1e-5, self.T_C1-273.15, self.h_C1*1e-3, self.s_C1*1e-3, self.x_C1, self.e_C1))
         print("State TS0 inlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TS0*1e-5, self.TS0_in-273.15, self.h_TS0_in*1e-3, self.s_TS0_in*1e-3))
         print("State TS0 outlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TS0*1e-5, self.TS0_out-273.15, self.h_TS0_out*1e-3, self.s_TS0_out*1e-3))
         print("State TES1 inlet: p = {:.2f} bar, T = {:.2f} °C, h = {:.2f} kJ/kg, s = {:.2f} kJ/kg.K".format(self.p_TES1*1e-5, self.T_TES1_in-273.15, self.h_TES1_in*1e-3, self.s_TES1_in*1e-3))
