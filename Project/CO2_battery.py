@@ -138,7 +138,7 @@ class CO2_battery(object):
         self.measured_pinch = pinch
         return pinch     
       
-    def plot_curves(self, T_hs_su, T_hs_ex, p_hs, fluid_hs, T_cs_su, T_cs_ex, p_cs, fluid_cs):
+    def plot_curves(self, T_hs_su, T_hs_ex, p_hs, fluid_hs, T_cs_su, T_cs_ex, p_cs, fluid_cs, name):
         T_hs = np.linspace(T_hs_ex, T_hs_su, 100)
         T_cs = np.linspace(T_cs_su, T_cs_ex, 100)
         h_hs = CP.PropsSI("H", "T", T_hs, "P", p_hs, fluid_hs) * 1e-3
@@ -151,11 +151,11 @@ class CO2_battery(object):
         h_cs /= h_cs[-1] # put h_cs[-1] = 1
 
         plt.figure()
-        plt.plot(h_hs, T_hs-273.15, label="Hot side at p = {:.2f} bar".format(p_hs/1e5))
-        plt.plot(h_cs, T_cs-273.15, label="Cold side at p = {:.2f} bar".format(p_cs/1e5))
+        plt.plot(h_hs, T_hs-273.15, label="Water side at p = {:.2f} bar".format(p_hs/1e5))
+        plt.plot(h_cs, T_cs-273.15, label="CO2 side at p = {:.2f} bar".format(p_cs/1e5))
         plt.xlabel("Normalized cumulative heat transfer [-]")
         plt.ylabel("Temperature [°C]")
-        plt.title("Heat exchanger TQ diagram")
+        plt.title("{} TQ diagram".format(name))
         plt.legend()
         plt.grid()
         plt.show()
@@ -433,11 +433,11 @@ class CO2_battery(object):
         self.total_energy = self.Pe + self.loss_rotex + self.loss_evaporator + self.loss_TES1 + self.loss_TES2 + self.loss_TES3 + self.loss_TES4 + self.loss_PCHX + self.loss_mec + self.loss_elec
         if self.plot:
             self.fig_pie_ex()
-            self.plot_curves(self.T_w_hot, self.T_w_cold, self.p_w, 'water', self.T_D1, self.T_D2, self.p_D1, self.fluid) # TES0
-            self.plot_curves(self.T_TES1_in, self.T_TES1_out, self.p_TES1, 'water', self.T_D2, self.T_D3, self.p_D2, self.fluid) # TES1
-            self.plot_curves(self.T_TES2_in, self.T_TES2_out, self.p_TES2, 'water', self.T_D3, self.T_D4, self.p_D3, self.fluid) # TES2
-            self.plot_curves(self.T_TES3_in, self.T_TES3_out, self.p_TES3, 'INCOMP::PNF2', self.T_D4, self.T_D5, self.p_D4, self.fluid) # TES3
-            self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, 'INCOMP::NaK', self.T_D5, self.T_D7, self.p_D5, self.fluid) # TES4
+            self.plot_curves(self.T_w_hot, self.T_w_cold, self.p_w, 'water', self.T_D1, self.T_D2, self.p_D1, self.fluid, "TS0") # TES0
+            self.plot_curves(self.T_TES1_in, self.T_TES1_out, self.p_TES1, 'water', self.T_D2, self.T_D3, self.p_D2, self.fluid, "TES1") # TES1
+            self.plot_curves(self.T_TES2_in, self.T_TES2_out, self.p_TES2, 'water', self.T_D3, self.T_D4, self.p_D3, self.fluid, "TES2") # TES2
+            self.plot_curves(self.T_TES3_in, self.T_TES3_out, self.p_TES3, 'INCOMP::PNF2', self.T_D4, self.T_D5, self.p_D4, self.fluid, "TES3") # TES3
+            self.plot_curves(self.T_TES4_in, self.T_TES4_out, self.p_TES4, 'INCOMP::NaK', self.T_D5, self.T_D7, self.p_D5, self.fluid, "TES4") # TES4
         return self.p, self.T, self.h, self.s, self.x, self.e, self.m_dot_CO2, self.m_dot_TS0, self.m_dot_TSE1, self.m_dot_TSE2, self.m_dot_TSE3, self.m_dot_TSE4, self.eta_rotex, self.eta_transex_TES0, self.eta_transex_TES1, self.eta_transex_TES2, self.eta_transex_TES3, self.eta_transex_TES4, self.eta_transex_PCHX, self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_mec, self.loss_elec, self.total_energy
 
     def fig_pie_ex(self):
