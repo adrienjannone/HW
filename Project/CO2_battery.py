@@ -486,7 +486,7 @@ class CO2_battery(object):
       
     def evaluate(self):
         self.discharge_phase()
-        self.total_energy = self.Pe + self.loss_rotex + self.loss_evaporator + self.loss_TES1 + self.loss_TES2 + self.loss_TES3 + self.loss_TES4 + self.loss_PCHX + self.loss_mec + self.loss_elec
+        self.total_energy = self.Pe + self.loss_rotex + self.loss_evaporator + self.loss_TES1 + self.loss_TES2 + self.loss_TES3 + self.loss_TES4 + self.loss_PCHX + self.loss_mec + self.loss_elec + self.loss_left
         if self.plot:
             self.fig_pie_ex()
             self.plotTS()
@@ -499,12 +499,30 @@ class CO2_battery(object):
         return self.p, self.T, self.h, self.s, self.x, self.e, self.m_dot_CO2, self.m_dot_TS0, self.m_dot_TSE1, self.m_dot_TSE2, self.m_dot_TSE3, self.m_dot_TSE4, self.eta_rotex, self.eta_transex_TES0, self.eta_transex_TES1, self.eta_transex_TES2, self.eta_transex_TES3, self.eta_transex_TES4, self.eta_transex_PCHX, self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_mec, self.loss_elec, self.total_energy
 
     def fig_pie_ex(self):
-        label = ['Rotex losses', 'TES0 losses', 'TES1 losses','TES2 losses', 'TES3 losses','TES4 losses', 'PCHX losses','Leftover losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
-        sizes = [self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_left, self.loss_mec, self.loss_elec, self.Pe]
-        colors = ['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0','#ffb3e6','#c4e17f','#f7c6c7','#d4a5a5','#a3a3a3','#8fd9b6']
-        plt.figure(figsize=(8, 8))
-        plt.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140, colors=colors)
-        plt.title('Exergy Losses Distribution in CO2 Battery Discharge Phase. Total exergy input: {:.2f} kW'.format(self.total_energy*1e-3))
+        label_orig = ['Rotex losses', 'TES0 losses', 'TES1 losses','TES2 losses', 'TES3 losses','TES4 losses', 'PCHX losses','Leftover losses', 'Mechanical losses', 'Electrical losses', "Effective Power"]
+        sizes_orig = [self.loss_rotex, self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX, self.loss_left, self.loss_mec, self.loss_elec, self.Pe]
+
+        small_losses_labels = ['Evaporator', 'TES1', 'TES2', 'TES3', 'TES4', 'PCHX']
+        sizes_small_losses = [self.loss_evaporator, self.loss_TES1, self.loss_TES2, self.loss_TES3, self.loss_TES4, self.loss_PCHX]
+        small_losses_sum = sum(sizes_small_losses)
+
+        total = sum(sizes_orig)
+        percentages = [100 * s / total for s in sizes_small_losses]
+
+        label = ['Rotex losses', 'HX Losses', "Electrical losses", "Mechanical losses", "Effective Power", "Leftover losses"]
+        sizes = [sizes_orig[0], small_losses_sum, sizes_orig[9], sizes_orig[8], sizes_orig[10], sizes_orig[7]]
+        colors = ['#ff9999', '#f7c6c7', '#a3a3a3', '#c4e17f', '#8fd9b6', "#e6951b"]
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+
+        ax1.pie(sizes, labels=label, autopct='%1.1f%%', startangle=140, colors=colors)
+        ax1.set_title('Exergy Losses Distribution in CO2 Battery Discharge Phase\nTotal exergy input: {:.2f} kW'.format(self.total_energy*1e-3))
+
+        table_data = [[l, f"{p:.1f} %"] for l, p in zip(small_losses_labels, percentages)]
+        ax2.axis('off')
+        ax2.table(cellText=table_data, colLabels=['Détails of small losses', 'Percentage'], loc='center')
+
+        plt.tight_layout()
         plt.show()
 
     def print_results(self):
