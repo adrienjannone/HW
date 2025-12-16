@@ -89,13 +89,13 @@ class CO2_battery(object):
         self.T_TES1_out = 25+273.15
         self.p_TES1    = 1.1e5
         self.T_TES2_in = 97+273.15
-        self.T_TES2_out = 42+273.15
+        self.T_TES2_out = 43+273.15
         self.p_TES2    = 1.1e5
         self.T_TES3_in = 300+273.15
-        self.T_TES3_out = 97+273.15
+        self.T_TES3_out = 98+273.15
         self.p_TES3    = 86e5
         self.T_TES4_in = self.T_storage_TES
-        self.T_TES4_out = 300+273.15
+        self.T_TES4_out = 301+273.15
         self.p_TES4    = 1.1e5
 
     def vaporator_efficiency(self):
@@ -115,7 +115,8 @@ class CO2_battery(object):
         h_hs_su = CP.PropsSI("H", "T", self.T_w_hot, "P", self.p_w, "water")  
         h_hs_ex = CP.PropsSI("H", "T", self.T_w_cold, "P", self.p_w, "water") 
 
-        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid)  
+        # h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid) 
+        h_cs_su = self.h_D1 
         h_cs_ex = CP.PropsSI("H", "T", self.T_D2, "P", p_evap, self.fluid)  
 
         self.h_hs = (h_hs_su - h_hs_ex)  
@@ -126,7 +127,8 @@ class CO2_battery(object):
         self.mass_ratio_TS0(p_evap)
         T_c = CP.PropsSI("T", "P", p_evap, "Q", 0, self.fluid)  
         h_c = CP.PropsSI("H", "P", p_evap, "Q", 0, self.fluid)  
-        h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid) 
+        # h_cs_su = CP.PropsSI("H", "T", self.T_D1, "P", p_evap, self.fluid) 
+        h_cs_su = self.h_D1
         dh = h_c - h_cs_su  
         h_hs_ex = CP.PropsSI("H", "T", self.T_w_cold, "P", self.p_w, "water")  
         
@@ -243,10 +245,11 @@ class CO2_battery(object):
         self.x_D0 = CP.PropsSI('Q', 'P', self.p_D0, 'T', self.T_D0, self.fluid)
 
         # State 1 - Evaporator inlet - TS0 inlet
-        self.T_D1 = self.T_D0
+        self.h_D1 = self.h_D0
         self.evaporator()
+        self.T_D1 = CP.PropsSI('T', 'P', self.p_D1, 'H', self.h_D1, self.fluid)
 
-        self.h_D1 = CP.PropsSI('H', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
+        # self.h_D1 = CP.PropsSI('H', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
         self.s_D1= CP.PropsSI('S', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
         self.e_D1 = self.h_D1 - self.h_ref - self.T_ref * (self.s_D1 - self.s_ref)
         self.x_D1 = CP.PropsSI('Q', 'P', self.p_D1, 'T', self.T_D1, self.fluid)
