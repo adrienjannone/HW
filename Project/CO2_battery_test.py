@@ -54,6 +54,6 @@ params = {
 }
 
 
-dome = CO2_battery(inputs, params, True)
+dome = CO2_battery(inputs, params, False)
 dome.evaluate()
 dome.print_results()

@@ -156,7 +156,6 @@ class CO2_battery(object):
     
     def TES1(self, TES1_in, TES1_out, p_TES1):
         self.h_TES1_in = CP.PropsSI('H', 'T', TES1_in, 'P', p_TES1, 'water')
-        print(self.h_TES1_in)
         self.s_TES1_in = CP.PropsSI('S', 'T', TES1_in, 'P', p_TES1, 'water')
         print(self.s_TES1_in)
         self.e_TES1_in = self.h_TES1_in - self.h_ref - self.T_ref * (self.s_TES1_in - self.s_ref)
@@ -194,6 +193,8 @@ class CO2_battery(object):
     
     def TES3(self, TES3_in, TES3_out, p_TES3):
         self.h_TES3_in = CP.PropsSI('H', 'T', TES3_in, 'P', p_TES3, 'water')
+        print("aa",TES3_in, p_TES3)
+        print("bb",self.h_TES3_in)
         self.s_TES3_in = CP.PropsSI('S', 'T', TES3_in, 'P', p_TES3, 'water')
         self.e_TES3_in = self.h_TES3_in - self.h_ref - self.T_ref * (self.s_TES3_in - self.s_ref)
         self.h_TES3_out = CP.PropsSI('H', 'T', TES3_out, 'P', p_TES3, 'water')
@@ -314,6 +315,7 @@ class CO2_battery(object):
         self.loss_TES3 = self.m_dot_TSE3 * (self.e_TES3_in - self.e_TES3_out) - self.m_dot_CO2 * (self.e_D5 - self.e_D4)
         self.loss_TES4 = self.m_dot_TSE4 * (self.e_TES4_in - self.e_TES4_out) - self.m_dot_CO2 * (self.e_D7 - self.e_D5)
         self.loss_PCHX = self.m_dot_CO2 * (self.e_D8 - self.e_D9) - self.m_dot_TS0 * (self.e_TS0_in - self.e_TS0_out)
+        self.loss_left = self.m_dot_CO2 * (self.e_D9 - self.e_C1)
         W_shaft = self.Pe / (self.eta_mec * self.eta_elec)
         self.loss_mec = W_shaft * (1 - self.eta_mec)
         self.loss_elec = W_shaft * self.eta_mec * (1 - self.eta_elec)
@@ -322,7 +324,8 @@ class CO2_battery(object):
         print(CP.PropsSI('Tcrit', 'Water')-273.15)
         print("Water evaporation pressure at T_TES3_in",CP.PropsSI('P', 'T', 300+273.15, 'Q', 0, "water"))
         #print("Water evaporation pressure at T_TES4_in",CP.PropsSI('P', 'T', self.T_storage_TES, 'Q', 0, "water"))
-
+        tot_power = self.loss_rotex + self.loss_evaporator + self.loss_TES1 + self.loss_TES2 + self.loss_TES3 + self.loss_TES4 + self.loss_PCHX + self.loss_mec + self.loss_elec + self.loss_left + self.Pe
+        print(tot_power)
       
     def evaluate(self):
         self.discharge_phase()
